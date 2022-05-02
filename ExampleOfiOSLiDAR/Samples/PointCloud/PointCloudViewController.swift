@@ -1,3 +1,4 @@
+ExampleOfiOSLiDAR/Samples/PointCloud/PointCloudViewController.swift
 //
 //  ViewController.swift
 //  ExampleOfiOSLiDAR
@@ -10,13 +11,20 @@ import Metal
 import MetalKit
 import CoreImage
 
+// FLIR
+import UIKit
+import ThermalSDK
+
+
 class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
+
+    
     @IBOutlet weak var mtkView: MTKView!
     
     // ARKit
     private var session: ARSession!
     var alphaTexture: MTLTexture?
-
+    
     // Metal
     private let device = MTLCreateSystemDefaultDevice()!
     private var commandQueue: MTLCommandQueue!
@@ -26,6 +34,39 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
         CVMetalTextureCacheCreate(kCFAllocatorDefault, nil, device, nil, &cache)
         return cache!
     }()
+    
+    
+    // FLIR
+    var discovery: FLIRDiscovery?
+    var camera: FLIRCamera?
+
+    @IBOutlet weak var centerSpotLabel: UILabel!
+    @IBOutlet weak var distanceLabel: UILabel!
+    @IBOutlet weak var distanceSlider: UISlider!
+    @IBOutlet weak var imageView: UIImageView!
+    @IBOutlet weak var rgbimageView: UIImageView!
+    
+    @IBOutlet weak var shootingPeriodLabel: UILabel!
+    @IBOutlet weak var shootingPeriodSlider: UISlider!
+    
+
+    var thermalStreamer: FLIRThermalStreamer?
+    var stream: FLIRStream?
+    var fusion: FLIRFusion?
+    
+    var thermal_img: UIImage!
+    var rgb_img: UIImage!
+    
+    var save_cnt: Int = 0
+    
+    var shootingPeriodInt: Int = 1
+    
+    var shootingStart: Bool = false
+    
+    let fm:LocalFileManager = LocalFileManager.instance
+    
+    let renderQueue = DispatchQueue(label: "render")
+    // FLIR
 
     private var texture: MTLTexture!
     lazy private var renderer = PointCloudRenderer(device: device,session: session, mtkView: mtkView)
@@ -74,16 +115,36 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
             colorDesc.usage = MTLTextureUsage(rawValue: MTLTextureUsage.renderTarget.rawValue | MTLTextureUsage.shaderRead.rawValue)
 
         }
+        
         super.viewDidLoad()
         initARSession()
         initMatteGenerator()
         initMetal()
         createTexture()
+        
+        // FLIR
+        discovery = FLIRDiscovery()
+        discovery?.delegate = self
+        
+        fm.createFolderIfNeeded()
+        // FLIR
     }
 
+    // FLIR
+    func requireCamera() {
+        guard camera == nil else {
+            return
+        }
+        let camera = FLIRCamera()
+        self.camera = camera
+        camera.delegate = self
+    }
+    
     @IBAction func panGesture(_ sender: UIPanGestureRecognizer) {
         func buildXRotateMatrix() -> matrix_float4x4 {
+            
             let rad = -(maxRad * Float(point.y) / cameraResolution.y).truncatingRemainder(dividingBy: Float.pi)
+            print("buildXRotateMatrix \(rad)")
             return matrix_float4x4(
                     simd_float4(1, 0,  0, 0),
                     simd_float4(0, cos(rad),  sin(rad), 0),
@@ -92,6 +153,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
         }
         func buildYRotateMatrix() -> matrix_float4x4 {
             let rad = (maxRad * Float(point.x) / cameraResolution.x).truncatingRemainder(dividingBy: Float.pi)
+            print("buildYRotateMatrix \(rad)")
             return matrix_float4x4(
                     simd_float4(cos(rad), 0,  -sin(rad), 0 ),
                     simd_float4(0, 1,  0, 0),
@@ -107,12 +169,79 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
 
         renderer.modelTransform = simd_mul(simd_mul(renderer.modelTransform, rotateX),rotateY)
     }
+    
+    func rotatePoints(x: Float, y: Float) {
+        func buildXRotateMatrix() -> matrix_float4x4 {
+            let rad = x
+            return matrix_float4x4(
+                    simd_float4(1, 0,  0, 0),
+                    simd_float4(0, cos(rad),  sin(rad), 0),
+                    simd_float4(0, -sin(rad), cos(rad), 0),
+                simd_float4(0, 0, 0, 1))
+        }
+        func buildYRotateMatrix() -> matrix_float4x4 {
+            let rad = y
+            return matrix_float4x4(
+                    simd_float4(cos(rad), 0,  -sin(rad), 0 ),
+                    simd_float4(0, 1,  0, 0),
+                    simd_float4(sin(rad), 0,  cos(rad), 0),
+                simd_float4(0, 0, 0, 1))
+        }
+
+        let rotateX = buildXRotateMatrix()
+        let rotateY = buildYRotateMatrix()
+
+        renderer.modelTransform = simd_mul(simd_mul(renderer.modelTransform, rotateX),rotateY)
+    }
+    
+    func standupPoints(){
+      
+        rotatePoints(x:Float(0), y:Float.pi/2)
+        rotatePoints(x:Float.pi/2, y:0)
+        rotatePoints(x:Float(0), y:-Float.pi/2)
+    }
+    
+    // FLIR
+    @IBAction func connectDeviceClicked(_ sender: Any) {
+        discovery?.start(.lightning)
+    }
+
+    @IBAction func disconnectClicked(_ sender: Any) {
+        camera?.disconnect()
+    }
+
+    @IBAction func connectEmulatorClicked(_ sender: Any) {
+        discovery?.start(.emulator)
+    }
+
+    @IBAction func distanceSliderValueChanged(_ sender: Any) {
+        if let remoteControl = self.camera?.getRemoteControl(),
+           let fusionController = remoteControl.getFusionController() {
+            let newDistance = distanceSlider.value
+            try? fusionController.setFusionDistance(Double(newDistance))
+        }
+    }
+    
+    @IBAction func periodSliderValueChanged(_ sender: UISlider)
+    {
+        self.shootingPeriodInt = Int(sender.value)
+        self.shootingPeriodLabel.text = "\(self.shootingPeriodInt) sec"
+        //print(self.shootingPeriodLabel.text)
+    }
+    // FLIR
 }
 
+
 extension PointCloudViewController: MTKViewDelegate {
+
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
         guard session.currentFrame != nil else {return}
         renderer.drawRectResized(size: size)
+
+    }
+    
+    @IBAction func rotate_points(_ sender: Any){
+        standupPoints()
     }
 
     func draw(in view: MTKView) {
@@ -139,7 +268,8 @@ extension PointCloudViewController: MTKViewDelegate {
         guard let (depthTexture, confidenceTexture) = session.currentFrame?.buildDepthTextures(textureCache: textureCache) else {return}
 
         guard let encoder = buildRenderEncoder(commandBuffer) else {return}
-
+        
+    
         renderer.update(commandBuffer, renderEncoder: encoder, capturedImageTextureY: textureY, capturedImageTextureCbCr: textureCbCr, depthTexture: depthTexture, confidenceTexture: confidenceTexture)
                 
         commandBuffer.present(drawable)
@@ -148,4 +278,146 @@ extension PointCloudViewController: MTKViewDelegate {
         
         commandBuffer.waitUntilCompleted()
     }
+}
+
+extension PointCloudViewController : FLIRDataReceivedDelegate {
+    func onDisconnected(_ camera: FLIRCamera, withError error: Error?) {
+        NSLog("\(#function) \(String(describing: error))")
+        DispatchQueue.main.async {
+            self.thermalStreamer = nil
+            self.stream = nil
+            let alert = UIAlertController(title: "Disconnected",
+                                          message: "Flir One disconnected",
+                                          preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+            self.present(alert, animated: true, completion: nil)
+        }
+    }
+}
+
+extension PointCloudViewController: FLIRDiscoveryEventDelegate {
+
+    func cameraFound(_ cameraIdentity: FLIRIdentity) {
+        switch cameraIdentity.cameraType() {
+        case .flirOne:
+            requireCamera()
+            guard !camera!.isConnected() else {
+                return
+            }
+            DispatchQueue.global().async {
+                do {
+                    try self.camera?.connect(cameraIdentity)
+                    let streams = self.camera?.getStreams()
+                    guard let stream = streams?.first else {
+                        NSLog("No streams found on camera!")
+                        return
+                    }
+                    self.stream = stream
+                    self.thermalStreamer = FLIRThermalStreamer(stream: stream)
+                
+                    stream.delegate = self
+                    do {
+                        try stream.start()
+                    } catch {
+                        NSLog("stream.start error \(error)")
+                    }
+                    
+                    self.thermalStreamer?.withThermalImage { image in
+
+                        // Change the camera setting
+                        self.fusion = image.getFusion()
+                        self.fusion?.setFusionMode(IR_MODE)
+                    }
+                    
+                } catch {
+                    NSLog("Camera connect error \(error)")
+                }
+            }
+        case .generic:
+            ()
+        @unknown default:
+            fatalError("unknown cameraType")
+        }
+    }
+
+    func discoveryError(_ error: String, netServiceError nsnetserviceserror: Int32, on iface: FLIRCommunicationInterface) {
+        NSLog("\(#function)")
+    }
+
+    func discoveryFinished(_ iface: FLIRCommunicationInterface) {
+        NSLog("\(#function)")
+    }
+
+    func cameraLost(_ cameraIdentity: FLIRIdentity) {
+        NSLog("\(#function)")
+    }
+}
+
+extension PointCloudViewController : FLIRStreamDelegate {
+    
+    func onError(_ error: Error) {
+        NSLog("\(#function) \(error)")
+    }
+
+    func onImageReceived() {
+        renderQueue.async {
+            do {
+                try self.thermalStreamer?.update()
+            } catch {
+                NSLog("update error \(error)")
+            }
+                
+            
+            DispatchQueue.main.async {
+                
+                self.thermalStreamer?.withThermalImage { image in
+                    
+                    let thermal_image = self.thermalStreamer?.getImage()
+   
+                    self.thermal_img = thermal_image
+                    self.imageView.image = thermal_image
+                    
+                    self.rgb_img = image.getPhoto()
+                    self.rgbimageView.image = self.rgb_img
+                    
+                    if let measurements = image.measurements {
+                        if measurements.getAllSpots().isEmpty {
+                            do {
+                                try measurements.addSpot(CGPoint(x: CGFloat(image.getWidth()) / 2,
+                                                                 y: CGFloat(image.getHeight()) / 2))
+                            } catch {
+                                NSLog("addSpot error \(error)")
+                            }
+                        }
+                        if let spot = measurements.getAllSpots().first {
+                            self.centerSpotLabel.text = spot.getValue().description()
+                        }
+                    }
+                    if let remoteControl = self.camera?.getRemoteControl(),
+                       let fusionController = remoteControl.getFusionController() {
+                        let distance = fusionController.getFusionDistance()
+                        self.distanceLabel.text = "\((distance * 1000).rounded() / 1000)"
+                        self.distanceSlider.value = Float(distance)
+                        
+                        
+                    }
+
+                    //let path = self.documentDirectoryPath()?.appendingPathComponent("exampleJpg.jpg")?.path.absoluteString
+                    //print(self.fm.getPathForImage(name: "Example"))
+                    //let path = getPathForImage(name: "Example")?.path
+                    let path = self.fm.getPathForImage(name: "IMG_\(self.save_cnt)")?.path
+                    do
+                    {
+                        print(path)
+                        try image.save(as:path!)
+                        print("Save success")
+                        self.save_cnt += 1
+                    } catch{
+                        print("Save failed \(error)")
+                    }
+                }
+            }
+        }
+    }
+    
 }

@@ -36,6 +36,29 @@
 		1EF1911225C607E3005064FC /* MenuItemCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EF1911125C607E3005064FC /* MenuItemCell.swift */; };
 		1EF5A0D026AA1D6600E49415 /* PointCloudViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EF5A0CE26AA1D6600E49415 /* PointCloudViewController.swift */; };
 		1EF5A0D126AA1D6600E49415 /* PointCloud.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 1EF5A0CF26AA1D6600E49415 /* PointCloud.storyboard */; };
+		5EAB24DA280A2BD50001D43E /* libavcodec.58.dylib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2420280A2BBF0001D43E /* libavcodec.58.dylib.framework */; };
+		5EAB24DB280A2BD50001D43E /* libavcodec.58.dylib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2420280A2BBF0001D43E /* libavcodec.58.dylib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		5EAB24DD280A2BD70001D43E /* libavdevice.58.dylib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2350280A2BBE0001D43E /* libavdevice.58.dylib.framework */; };
+		5EAB24DE280A2BD70001D43E /* libavdevice.58.dylib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2350280A2BBE0001D43E /* libavdevice.58.dylib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		5EAB24DF280A2BD90001D43E /* libavfilter.7.dylib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2353280A2BBE0001D43E /* libavfilter.7.dylib.framework */; };
+		5EAB24E0280A2BD90001D43E /* libavfilter.7.dylib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2353280A2BBE0001D43E /* libavfilter.7.dylib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		5EAB24E1280A2BDA0001D43E /* libavformat.58.dylib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2356280A2BBE0001D43E /* libavformat.58.dylib.framework */; };
+		5EAB24E2280A2BDA0001D43E /* libavformat.58.dylib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2356280A2BBE0001D43E /* libavformat.58.dylib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		5EAB24E3280A2BDB0001D43E /* libavutil.56.dylib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2354280A2BBE0001D43E /* libavutil.56.dylib.framework */; };
+		5EAB24E4280A2BDB0001D43E /* libavutil.56.dylib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2354280A2BBE0001D43E /* libavutil.56.dylib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		5EAB24E5280A2BDC0001D43E /* liblive666.dylib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2351280A2BBE0001D43E /* liblive666.dylib.framework */; };
+		5EAB24E6280A2BDC0001D43E /* liblive666.dylib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2351280A2BBE0001D43E /* liblive666.dylib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		5EAB24E7280A2BDD0001D43E /* libswresample.3.dylib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2352280A2BBE0001D43E /* libswresample.3.dylib.framework */; };
+		5EAB24E8280A2BDD0001D43E /* libswresample.3.dylib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2352280A2BBE0001D43E /* libswresample.3.dylib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		5EAB24E9280A2BDE0001D43E /* libswscale.5.dylib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB241F280A2BBF0001D43E /* libswscale.5.dylib.framework */; };
+		5EAB24EA280A2BDE0001D43E /* libswscale.5.dylib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB241F280A2BBF0001D43E /* libswscale.5.dylib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		5EAB24EB280A2BDF0001D43E /* MeterLink.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2355280A2BBE0001D43E /* MeterLink.framework */; };
+		5EAB24EC280A2BDF0001D43E /* MeterLink.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2355280A2BBE0001D43E /* MeterLink.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		5EAB24ED280A2BE00001D43E /* ThermalSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB241E280A2BBF0001D43E /* ThermalSDK.framework */; };
+		5EAB24EE280A2BE00001D43E /* ThermalSDK.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB241E280A2BBF0001D43E /* ThermalSDK.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		5EAB24F1280A2F0C0001D43E /* FLIROne.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 5EAB24F0280A2F0C0001D43E /* FLIROne.storyboard */; };
+		5EAB24F4280A2F220001D43E /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EAB24F2280A2F220001D43E /* ViewController.swift */; };
+		5EAB24F5280A2F220001D43E /* ViewController_album.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EAB24F3280A2F220001D43E /* ViewController_album.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -54,6 +77,29 @@
 			remoteInfo = ExampleOfiOSLiDAR;
 		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		5EAB24DC280A2BD50001D43E /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				5EAB24DB280A2BD50001D43E /* libavcodec.58.dylib.framework in Embed Frameworks */,
+				5EAB24DE280A2BD70001D43E /* libavdevice.58.dylib.framework in Embed Frameworks */,
+				5EAB24E2280A2BDA0001D43E /* libavformat.58.dylib.framework in Embed Frameworks */,
+				5EAB24E0280A2BD90001D43E /* libavfilter.7.dylib.framework in Embed Frameworks */,
+				5EAB24E4280A2BDB0001D43E /* libavutil.56.dylib.framework in Embed Frameworks */,
+				5EAB24E6280A2BDC0001D43E /* liblive666.dylib.framework in Embed Frameworks */,
+				5EAB24EA280A2BDE0001D43E /* libswscale.5.dylib.framework in Embed Frameworks */,
+				5EAB24EE280A2BE00001D43E /* ThermalSDK.framework in Embed Frameworks */,
+				5EAB24EC280A2BDF0001D43E /* MeterLink.framework in Embed Frameworks */,
+				5EAB24E8280A2BDD0001D43E /* libswresample.3.dylib.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		1E12889B25D50CDB00661E0D /* MDLMesh+Ext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "MDLMesh+Ext.swift"; sourceTree = "<group>"; };
@@ -92,6 +138,19 @@
 		1EF1911125C607E3005064FC /* MenuItemCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuItemCell.swift; sourceTree = "<group>"; };
 		1EF5A0CE26AA1D6600E49415 /* PointCloudViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PointCloudViewController.swift; sourceTree = "<group>"; };
 		1EF5A0CF26AA1D6600E49415 /* PointCloud.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = PointCloud.storyboard; sourceTree = "<group>"; };
+		5EAB2350280A2BBE0001D43E /* libavdevice.58.dylib.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = libavdevice.58.dylib.framework; sourceTree = "<group>"; };
+		5EAB2351280A2BBE0001D43E /* liblive666.dylib.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = liblive666.dylib.framework; sourceTree = "<group>"; };
+		5EAB2352280A2BBE0001D43E /* libswresample.3.dylib.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = libswresample.3.dylib.framework; sourceTree = "<group>"; };
+		5EAB2353280A2BBE0001D43E /* libavfilter.7.dylib.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = libavfilter.7.dylib.framework; sourceTree = "<group>"; };
+		5EAB2354280A2BBE0001D43E /* libavutil.56.dylib.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = libavutil.56.dylib.framework; sourceTree = "<group>"; };
+		5EAB2355280A2BBE0001D43E /* MeterLink.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = MeterLink.framework; sourceTree = "<group>"; };
+		5EAB2356280A2BBE0001D43E /* libavformat.58.dylib.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = libavformat.58.dylib.framework; sourceTree = "<group>"; };
+		5EAB241E280A2BBF0001D43E /* ThermalSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ThermalSDK.framework; sourceTree = "<group>"; };
+		5EAB241F280A2BBF0001D43E /* libswscale.5.dylib.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = libswscale.5.dylib.framework; sourceTree = "<group>"; };
+		5EAB2420280A2BBF0001D43E /* libavcodec.58.dylib.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = libavcodec.58.dylib.framework; sourceTree = "<group>"; };
+		5EAB24F0280A2F0C0001D43E /* FLIROne.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = FLIROne.storyboard; sourceTree = "<group>"; };
+		5EAB24F2280A2F220001D43E /* ViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
+		5EAB24F3280A2F220001D43E /* ViewController_album.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewController_album.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,6 +158,16 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5EAB24E7280A2BDD0001D43E /* libswresample.3.dylib.framework in Frameworks */,
+				5EAB24E5280A2BDC0001D43E /* liblive666.dylib.framework in Frameworks */,
+				5EAB24DA280A2BD50001D43E /* libavcodec.58.dylib.framework in Frameworks */,
+				5EAB24DD280A2BD70001D43E /* libavdevice.58.dylib.framework in Frameworks */,
+				5EAB24E1280A2BDA0001D43E /* libavformat.58.dylib.framework in Frameworks */,
+				5EAB24E9280A2BDE0001D43E /* libswscale.5.dylib.framework in Frameworks */,
+				5EAB24EB280A2BDF0001D43E /* MeterLink.framework in Frameworks */,
+				5EAB24ED280A2BE00001D43E /* ThermalSDK.framework in Frameworks */,
+				5EAB24DF280A2BD90001D43E /* libavfilter.7.dylib.framework in Frameworks */,
+				5EAB24E3280A2BDB0001D43E /* libavutil.56.dylib.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -170,6 +239,7 @@
 		1EEE224D25A7039B00706DE8 = {
 			isa = PBXGroup;
 			children = (
+				5EAB234F280A2BBE0001D43E /* thermal-sdk-ios-objc-arm64-1.11.0 */,
 				1EEE225825A7039B00706DE8 /* ExampleOfiOSLiDAR */,
 				1EEE226F25A7039C00706DE8 /* ExampleOfiOSLiDARTests */,
 				1EEE227A25A7039C00706DE8 /* ExampleOfiOSLiDARUITests */,
@@ -225,13 +295,14 @@
 		1EF190F925C60405005064FC /* Samples */ = {
 			isa = PBXGroup;
 			children = (
-				1EF190FA25C60418005064FC /* Depth */,
-				1E2B6D5525C68D0800F76D8C /* ConfidenceMap */,
 				1ED25C3925C7EC5000CDB5AE /* Collision */,
-				1E34C94325D3237E00800E8D /* Export */,
-				1E758FB525D74113001F6BA2 /* Scan */,
-				1EC9F09026A96DF5001E955F /* PointCloud */,
 				1EF190FB25C60444005064FC /* Common */,
+				1E2B6D5525C68D0800F76D8C /* ConfidenceMap */,
+				1EF190FA25C60418005064FC /* Depth */,
+				1E34C94325D3237E00800E8D /* Export */,
+				5EAB24EF280A2ED30001D43E /* FLIROne */,
+				1EC9F09026A96DF5001E955F /* PointCloud */,
+				1E758FB525D74113001F6BA2 /* Scan */,
 			);
 			path = Samples;
 			sourceTree = "<group>";
@@ -257,6 +328,33 @@
 			path = Common;
 			sourceTree = "<group>";
 		};
+		5EAB234F280A2BBE0001D43E /* thermal-sdk-ios-objc-arm64-1.11.0 */ = {
+			isa = PBXGroup;
+			children = (
+				5EAB2350280A2BBE0001D43E /* libavdevice.58.dylib.framework */,
+				5EAB2351280A2BBE0001D43E /* liblive666.dylib.framework */,
+				5EAB2352280A2BBE0001D43E /* libswresample.3.dylib.framework */,
+				5EAB2353280A2BBE0001D43E /* libavfilter.7.dylib.framework */,
+				5EAB2354280A2BBE0001D43E /* libavutil.56.dylib.framework */,
+				5EAB2355280A2BBE0001D43E /* MeterLink.framework */,
+				5EAB2356280A2BBE0001D43E /* libavformat.58.dylib.framework */,
+				5EAB241E280A2BBF0001D43E /* ThermalSDK.framework */,
+				5EAB241F280A2BBF0001D43E /* libswscale.5.dylib.framework */,
+				5EAB2420280A2BBF0001D43E /* libavcodec.58.dylib.framework */,
+			);
+			path = "thermal-sdk-ios-objc-arm64-1.11.0";
+			sourceTree = "<group>";
+		};
+		5EAB24EF280A2ED30001D43E /* FLIROne */ = {
+			isa = PBXGroup;
+			children = (
+				5EAB24F0280A2F0C0001D43E /* FLIROne.storyboard */,
+				5EAB24F3280A2F220001D43E /* ViewController_album.swift */,
+				5EAB24F2280A2F220001D43E /* ViewController.swift */,
+			);
+			path = FLIROne;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -267,6 +365,7 @@
 				1EEE225225A7039B00706DE8 /* Sources */,
 				1EEE225325A7039B00706DE8 /* Frameworks */,
 				1EEE225425A7039B00706DE8 /* Resources */,
+				5EAB24DC280A2BD50001D43E /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -361,6 +460,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1E34C94525D3239E00800E8D /* Export.storyboard in Resources */,
+				5EAB24F1280A2F0C0001D43E /* FLIROne.storyboard in Resources */,
 				1EEE226625A7039C00706DE8 /* LaunchScreen.storyboard in Resources */,
 				1EF1910025C604C5005064FC /* DepthMap.storyboard in Resources */,
 				1E2B6D5F25C68D4100F76D8C /* ConfidenceMap.storyboard in Resources */,
@@ -394,8 +494,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				1E1875B425D7A89500C09A98 /* SCNGeometry+Ext.swift in Sources */,
+				5EAB24F4280A2F220001D43E /* ViewController.swift in Sources */,
 				1E9A572426AAA1180083CFDD /* Helpers.swift in Sources */,
 				1ED25C4025C7EC7800CDB5AE /* CollisionViewController.swift in Sources */,
+				5EAB24F5280A2F220001D43E /* ViewController_album.swift in Sources */,
 				1EEE225C25A7039B00706DE8 /* DepthMapViewController.swift in Sources */,
 				1E9A572626AAA5A80083CFDD /* PointCloudShaders.metal in Sources */,
 				1E12889C25D50CDB00661E0D /* MDLMesh+Ext.swift in Sources */,
@@ -587,13 +689,18 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = P67QP7Z567;
+				DEVELOPMENT_TEAM = Y5JSJR5UML;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ExampleOfiOSLiDAR",
+					"$(PROJECT_DIR)/thermal-sdk-ios-objc-arm64-1.11.0",
+				);
 				INFOPLIST_FILE = ExampleOfiOSLiDAR/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = tokyoyoshida.app.ExampleOfiOSLiDAR;
+				PRODUCT_BUNDLE_IDENTIFIER = tokyoyoshida.app.ExampleOfiOSLiDAR2;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = ExampleOfiOSLiDAR/Samples/PointCloud/PointCloudShaderTypes.h;
 				SWIFT_VERSION = 5.0;
@@ -607,13 +714,18 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = P67QP7Z567;
+				DEVELOPMENT_TEAM = Y5JSJR5UML;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/ExampleOfiOSLiDAR",
+					"$(PROJECT_DIR)/thermal-sdk-ios-objc-arm64-1.11.0",
+				);
 				INFOPLIST_FILE = ExampleOfiOSLiDAR/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = tokyoyoshida.app.ExampleOfiOSLiDAR;
+				PRODUCT_BUNDLE_IDENTIFIER = tokyoyoshida.app.ExampleOfiOSLiDAR2;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = ExampleOfiOSLiDAR/Samples/PointCloud/PointCloudShaderTypes.h;
 				SWIFT_VERSION = 5.0;

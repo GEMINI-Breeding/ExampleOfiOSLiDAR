@@ -52,6 +52,11 @@ class MenuViewModel {
             title: "Point Cloud",
             description: "Point cloud.",
             prefix: "PointCloud"
+        ),
+        MenuItem (
+            title: "FLIROne",
+            description: "FLIROne",
+            prefix: "FLIROne"
         )
     ]
     
