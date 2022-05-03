@@ -21,6 +21,12 @@ extension ARFrame {
         
         return UIImage(ciImage: screenTransformed(ciImage: ciImage, orientation: orientation, viewPort: viewPort))
     }
+    
+    func ColorTransformedImage(orientation: UIInterfaceOrientation, viewPort: CGRect) -> UIImage? {
+        let pixelBuffer = self.capturedImage
+        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+        return UIImage(ciImage: screenTransformed(ciImage: ciImage, orientation: orientation, viewPort: viewPort))
+    }
 
     func confidenceMapToCIImage(pixelBuffer: CVPixelBuffer) -> CIImage? {
         func confienceValueToPixcelValue(confidenceValue: UInt8) -> UInt8 {

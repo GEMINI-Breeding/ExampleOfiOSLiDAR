@@ -1,4 +1,3 @@
-ExampleOfiOSLiDAR/Samples/PointCloud/PointCloudViewController.swift
 //
 //  ViewController.swift
 //  ExampleOfiOSLiDAR
@@ -15,6 +14,8 @@ import CoreImage
 import UIKit
 import ThermalSDK
 
+// Depth
+import RealityKit
 
 class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
 
