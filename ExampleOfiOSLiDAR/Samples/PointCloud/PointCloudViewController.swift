@@ -68,7 +68,16 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
     
     let renderQueue = DispatchQueue(label: "render")
     // FLIR
-
+    
+    
+    //////////
+    var depth_img: UIImage!
+    @IBOutlet weak var depthImageView: UIImageView!
+    var iPhone_rgb_img: UIImage!
+    @IBOutlet weak var iPhone_rgb_imgView: UIImageView!
+    ///////////
+    
+    
     private var texture: MTLTexture!
     lazy private var renderer = PointCloudRenderer(device: device,session: session, mtkView: mtkView)
     
@@ -278,6 +287,13 @@ extension PointCloudViewController: MTKViewDelegate {
         commandBuffer.commit()
         
         commandBuffer.waitUntilCompleted()
+        
+        let depth_ROI = CGRect(x: 0, y: 0, width: 480, height: 640)
+        self.iPhone_rgb_img = session.currentFrame?.ColorTransformedImage(orientation: orientation, viewPort: depth_ROI)
+        self.iPhone_rgb_imgView.image = self.iPhone_rgb_img
+        
+        self.depth_img = session.currentFrame?.depthMapTransformedImage(orientation: orientation, viewPort: depth_ROI)
+        self.depthImageView.image = self.depth_img
     }
 }
 

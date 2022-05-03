@@ -117,10 +117,12 @@ class DepthMapViewController: UIViewController {
         let configuration = buildConfigure()
         arView.session.run(configuration)
         
+        // FLIR
         discovery = FLIRDiscovery()
         discovery?.delegate = self
         
         fm.createFolderIfNeeded()
+        // FLIR End
     }
 
    
@@ -131,7 +133,9 @@ class DepthMapViewController: UIViewController {
 extension DepthMapViewController : ARSessionDelegate {
     func session(_ session: ARSession, didUpdate frame: ARFrame) {
         let depth_ROI = CGRect(x: 0, y: 0, width: 480, height: 640)
-        self.depth_img = session.currentFrame?.depthMapTransformedImage(orientation: orientation, viewPort: depth_ROI)
+        //self.depth_img = session.currentFrame?.depthMapTransformedImage(orientation: orientation, viewPort: depth_ROI)
+        self.depth_img = session.currentFrame?.depthMapTransformedNormalizedImage(orientation: orientation, viewPort: depth_ROI)
+        
         self.iPhone_rgb_img = frame.ColorTransformedImage(orientation: orientation, viewPort: depth_ROI)
         depthImageView.image = self.depth_img
     }
