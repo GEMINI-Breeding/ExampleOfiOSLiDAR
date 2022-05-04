@@ -131,6 +131,25 @@ extension ARFrame {
         }
         return UIImage(ciImage: screenTransformed(ciImage: ciImage, orientation: orientation, viewPort: viewPort))
     }
+    
+    func depthmapTransfromedRescaledImage(orientation: UIInterfaceOrientation, viewPort: CGRect) -> UIImage?    {
+        guard let pixelBuffer = self.sceneDepth?.depthMap else { return nil }
+        let pixelBufferCopy: CVPixelBuffer
+        do
+        {
+            try pixelBufferCopy = pixelBuffer.copy()
+
+        } catch{
+            pixelBufferCopy = pixelBuffer
+        }
+        
+        pixelBufferCopy.normalize()
+        //pixelBuffer.normalize()
+        let ciImage = CIImage(cvPixelBuffer: pixelBufferCopy)
+        return UIImage(ciImage: screenTransformed(ciImage: ciImage, orientation: orientation, viewPort: viewPort))
+        
+       
+    }
 
     func ConfidenceMapTransformedImage(orientation: UIInterfaceOrientation, viewPort: CGRect) -> UIImage? {
         guard let pixelBuffer = self.sceneDepth?.confidenceMap,

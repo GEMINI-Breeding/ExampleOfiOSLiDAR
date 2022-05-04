@@ -30,7 +30,8 @@ class PointCloudRenderer {
     private let confidenceThreshold = 1
 
     private lazy var semaphore = DispatchSemaphore(value: maxBuffers)
-    private let orientation = UIInterfaceOrientation.landscapeRight
+    //private let orientation = UIInterfaceOrientation.landscapeRight
+    private let orientation = UIInterfaceOrientation.portrait // Set defalut screen orientation
     private var viewportSize = CGSize()
     private lazy var rotateToARCamera = Self.makeRotateToARCameraMatrix(orientation: orientation)
 

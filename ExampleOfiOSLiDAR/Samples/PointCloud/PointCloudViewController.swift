@@ -57,6 +57,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
     
     var thermal_img: UIImage!
     var rgb_img: UIImage!
+    var flir_img: FLIRThermalImage!
     
     var save_cnt: Int = 0
     
@@ -76,6 +77,89 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
     var iPhone_rgb_img: UIImage!
     @IBOutlet weak var iPhone_rgb_imgView: UIImageView!
     ///////////
+    
+    // Metronome - Timelapse
+    @IBOutlet weak var bpmLabel: UILabel!
+    @IBOutlet weak var tickLabel: UILabel!
+    
+    let myMetronome = Metronome()
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+
+        myMetronome.onTick = { (nextTick) in
+            self.animateTick()
+            
+            // Save functions..
+            print("Save file here!")
+            self.saveFiles()
+        }
+        updateBpm()
+    }
+
+    private func animateTick() {
+        tickLabel.alpha = 1.0
+        UIView.animate(withDuration: 0.35) {
+            self.tickLabel.alpha = 0.0
+        }
+    }
+
+    @IBAction func startMetronome(_: Any?) {
+        myMetronome.enabled = true
+    }
+
+    @IBAction func stopMetronome(_: Any?) {
+        myMetronome.enabled = false
+    }
+
+    
+    @IBAction func periodSliderValueChanged(_ sender: UISlider)
+    {
+        self.shootingPeriodInt = Int(sender.value)
+        myMetronome.bpm = 60 / Float(self.shootingPeriodInt)
+        print(myMetronome.bpm)
+        updateBpm()
+    }
+    
+    private func updateBpm() {
+        let metronomeBpm = Int(myMetronome.bpm)
+        //bpmLabel.text = "\(metronomeBpm)"
+        self.shootingPeriodLabel.text = "\(self.shootingPeriodInt) sec"
+    }
+    
+    func reset_sliders()
+    {
+        shootingPeriodSlider.minimumValue = 1
+        shootingPeriodSlider.maximumValue = 10
+        shootingPeriodSlider.value = 5
+    }
+    
+    func saveFiles()
+    {
+        // Save FLIR Image
+        let path = self.fm.getPathForImage(name: "IMG_\(self.save_cnt)")?.path
+        do
+        {
+            print(path)
+            try self.flir_img.save(as:path!)
+            print("Save success")
+            self.save_cnt += 1
+        } catch{
+            print("Save failed \(error)")
+        }
+        
+        // @TODO: Save iPhone jpg
+        
+        // @TODO: Save iPhone Depth
+        
+        // @TODO: Save iPhone Point cloud
+        
+        // @TODO: Save GPS Coordinate, Roll, Pich, Yaw
+        
+        
+        
+    }
+    // Metronome
     
     
     private var texture: MTLTexture!
@@ -138,6 +222,10 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
         
         fm.createFolderIfNeeded()
         // FLIR
+        
+        // Metronome
+        reset_sliders()
+        
     }
 
     // FLIR
@@ -154,7 +242,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
         func buildXRotateMatrix() -> matrix_float4x4 {
             
             let rad = -(maxRad * Float(point.y) / cameraResolution.y).truncatingRemainder(dividingBy: Float.pi)
-            print("buildXRotateMatrix \(rad)")
+            //print("buildXRotateMatrix \(rad)")
             return matrix_float4x4(
                     simd_float4(1, 0,  0, 0),
                     simd_float4(0, cos(rad),  sin(rad), 0),
@@ -163,7 +251,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
         }
         func buildYRotateMatrix() -> matrix_float4x4 {
             let rad = (maxRad * Float(point.x) / cameraResolution.x).truncatingRemainder(dividingBy: Float.pi)
-            print("buildYRotateMatrix \(rad)")
+            //print("buildYRotateMatrix \(rad)")
             return matrix_float4x4(
                     simd_float4(cos(rad), 0,  -sin(rad), 0 ),
                     simd_float4(0, 1,  0, 0),
@@ -206,9 +294,41 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
     
     func standupPoints(){
       
-        rotatePoints(x:Float(0), y:Float.pi/2)
-        rotatePoints(x:Float.pi/2, y:0)
-        rotatePoints(x:Float(0), y:-Float.pi/2)
+        //rotatePoints(x:Float(0), y:Float.pi/2)
+        //rotatePoints(x:Float.pi/2, y:0)
+        //rotatePoints(x:Float(0), y:-Float.pi/2)
+        
+        func buildXRotateMatrix(x: Float) -> matrix_float4x4 {
+            let rad = x
+            return matrix_float4x4(
+                    simd_float4(1, 0,  0, 0),
+                    simd_float4(0, cos(rad),  sin(rad), 0),
+                    simd_float4(0, -sin(rad), cos(rad), 0),
+                simd_float4(0, 0, 0, 1))
+        }
+        func buildYRotateMatrix(y: Float) -> matrix_float4x4 {
+            let rad = y
+            return matrix_float4x4(
+                    simd_float4(cos(rad), 0,  -sin(rad), 0 ),
+                    simd_float4(0, 1,  0, 0),
+                    simd_float4(sin(rad), 0,  cos(rad), 0),
+                simd_float4(0, 0, 0, 1))
+        }
+
+        var rotateX = buildXRotateMatrix(x:Float(0))
+        var rotateY = buildYRotateMatrix(y:Float.pi/2)
+        var rotation_matrix = simd_mul(rotateX,rotateY)
+        
+        rotateX = buildXRotateMatrix(x:Float.pi/2)
+        rotateY = buildYRotateMatrix(y:Float(0))
+        rotation_matrix = simd_mul(simd_mul(rotation_matrix, rotateX),rotateY)
+        
+        rotateX = buildXRotateMatrix(x:Float(0))
+        rotateY = buildYRotateMatrix(y:-Float.pi/2)
+        renderer.modelTransform = simd_mul(simd_mul(rotation_matrix, rotateX),rotateY)
+        
+        let cameraResolution = Float2(Float(session.currentFrame?.camera.imageResolution.width ?? 0), Float(session.currentFrame?.camera.imageResolution.height ?? 0))
+        //print(cameraResolution)
     }
     
     // FLIR
@@ -231,13 +351,6 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
             try? fusionController.setFusionDistance(Double(newDistance))
         }
     }
-    
-    @IBAction func periodSliderValueChanged(_ sender: UISlider)
-    {
-        self.shootingPeriodInt = Int(sender.value)
-        self.shootingPeriodLabel.text = "\(self.shootingPeriodInt) sec"
-        //print(self.shootingPeriodLabel.text)
-    }
     // FLIR
 }
 
@@ -250,9 +363,9 @@ extension PointCloudViewController: MTKViewDelegate {
 
     }
     
-    @IBAction func rotate_points(_ sender: Any){
-        standupPoints()
-    }
+//    @IBAction func rotate_points(_ sender: Any){
+//        standupPoints()
+//    }
 
     func draw(in view: MTKView) {
         func getAlphaTexture(_ commandBuffer: MTLCommandBuffer) -> MTLTexture? {
@@ -279,7 +392,8 @@ extension PointCloudViewController: MTKViewDelegate {
 
         guard let encoder = buildRenderEncoder(commandBuffer) else {return}
         
-    
+        //standupPoints()
+        
         renderer.update(commandBuffer, renderEncoder: encoder, capturedImageTextureY: textureY, capturedImageTextureCbCr: textureCbCr, depthTexture: depthTexture, confidenceTexture: confidenceTexture)
                 
         commandBuffer.present(drawable)
@@ -288,12 +402,16 @@ extension PointCloudViewController: MTKViewDelegate {
         
         commandBuffer.waitUntilCompleted()
         
-        let depth_ROI = CGRect(x: 0, y: 0, width: 480, height: 640)
+        // iPhone RGB & Depth
+        let depth_ROI = CGRect(x: 0, y: 0, width: 1440, height: 1920)
         self.iPhone_rgb_img = session.currentFrame?.ColorTransformedImage(orientation: orientation, viewPort: depth_ROI)
         self.iPhone_rgb_imgView.image = self.iPhone_rgb_img
         
-        self.depth_img = session.currentFrame?.depthMapTransformedImage(orientation: orientation, viewPort: depth_ROI)
+        //self.depth_img = session.currentFrame?.depthMapTransformedImage(orientation: orientation, viewPort: depth_ROI)
+        self.depth_img = session.currentFrame?.depthmapTransfromedRescaledImage(orientation: orientation, viewPort: depth_ROI)
         self.depthImageView.image = self.depth_img
+        
+        
     }
 }
 
@@ -418,19 +536,22 @@ extension PointCloudViewController : FLIRStreamDelegate {
                         
                         
                     }
-
-                    //let path = self.documentDirectoryPath()?.appendingPathComponent("exampleJpg.jpg")?.path.absoluteString
-                    //print(self.fm.getPathForImage(name: "Example"))
-                    //let path = getPathForImage(name: "Example")?.path
-                    let path = self.fm.getPathForImage(name: "IMG_\(self.save_cnt)")?.path
-                    do
-                    {
-                        print(path)
-                        try image.save(as:path!)
-                        print("Save success")
-                        self.save_cnt += 1
-                    } catch{
-                        print("Save failed \(error)")
+                    self.flir_img = image
+                    
+                    if false{
+                        //let path = self.documentDirectoryPath()?.appendingPathComponent("exampleJpg.jpg")?.path.absoluteString
+                        //print(self.fm.getPathForImage(name: "Example"))
+                        //let path = getPathForImage(name: "Example")?.path
+                        let path = self.fm.getPathForImage(name: "IMG_\(self.save_cnt)")?.path
+                        do
+                        {
+                            print(path)
+                            try image.save(as:path!)
+                            print("Save success")
+                            self.save_cnt += 1
+                        } catch{
+                            print("Save failed \(error)")
+                        }
                     }
                 }
             }
