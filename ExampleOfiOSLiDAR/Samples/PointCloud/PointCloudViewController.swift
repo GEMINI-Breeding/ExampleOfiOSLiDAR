@@ -17,7 +17,10 @@ import ThermalSDK
 // Depth
 import RealityKit
 
-class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
+// Roll pitch yaw
+import CoreMotion
+
+class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, CLLocationManagerDelegate {
 
     
     @IBOutlet weak var mtkView: MTKView!
@@ -68,9 +71,22 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
     let fm:LocalFileManager = LocalFileManager.instance
     
     let renderQueue = DispatchQueue(label: "render")
+
+    var flir_on: Bool = false
     // FLIR
     
+    let locationManager = CLLocationManager()
+    var locValue =  CLLocationCoordinate2D()
+    var altitude: Double = 0.0
+    var timestamp: Date = Date()
     
+    var motionManager    = CMMotionManager()
+    var roll = 0.0
+    var pitch = 0.0
+    var yaw = 0.0
+    @IBOutlet weak var rollLabel: UILabel!
+    @IBOutlet weak var pitchLabel: UILabel!
+    @IBOutlet weak var yawLabel: UILabel!
     //////////
     var depth_img: UIImage!
     @IBOutlet weak var depthImageView: UIImageView!
@@ -104,8 +120,14 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
         }
     }
 
-    @IBAction func startMetronome(_: Any?) {
-        myMetronome.enabled = true
+    @IBAction func startMetronome(_ sender: AnyObject) {
+        if myMetronome.enabled{
+            myMetronome.enabled = false
+            sender.setTitle("Start Rec.", for: [])
+        }else{
+            myMetronome.enabled = true
+            sender.setTitle("Stop Rec.", for: [])
+        }
     }
 
     @IBAction func stopMetronome(_: Any?) {
@@ -121,6 +143,11 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
         updateBpm()
     }
     
+    @IBAction func manualCapture(_: Any?) {
+        saveFiles()
+        animateTick()
+    }
+    
     private func updateBpm() {
         let metronomeBpm = Int(myMetronome.bpm)
         //bpmLabel.text = "\(metronomeBpm)"
@@ -134,29 +161,81 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
         shootingPeriodSlider.value = 5
     }
     
+    func saveJson(){
+        //print("locations = \(self.locValue.latitude) \(self.locValue.longitude)")
+        //print(self.altitude)
+        
+        //@TODO: Add more metadata
+        let personArray =  [
+                            ["gps": ["latitude": "\(self.locValue.latitude)", "longitude": "\(self.locValue.longitude)", "altitude": "\(self.altitude)"]],
+                            ["attitude": ["roll": "\(self.roll)", "pitch": "\(self.pitch)", "yaw": "\(self.yaw)"]],
+                            ["timestamp": "\(self.timestamp)"],
+                            ]
+        
+        // Get the url of Persons.json in document directory
+        let fileUrl = self.fm.getPathForImageExt(subdir: "meta_json", name: "IMG_\(self.save_cnt)", ext: "json")
+        
+        // Create a write-only stream
+        guard let stream = OutputStream(toFileAtPath: fileUrl!.path, append: false) else { return }
+        stream.open()
+        defer {
+            stream.close()
+        }
+
+        // Transform array into data and save it into file
+        var error: NSError?
+        JSONSerialization.writeJSONObject(personArray, to: stream, options: [], error: &error)
+
+        // Handle error
+        if let error = error {
+            print(error)
+        }
+    }
+    
     func saveFiles()
     {
+        // Create folder
+        self.fm.createFolderIfNeeded()
+        // Get Next cnt
+        self.save_cnt = self.fm.getNextCnt(subDir: "depth_tiff")
+        
         // Save FLIR Image
-        let path = self.fm.getPathForImage(name: "IMG_\(self.save_cnt)")?.path
-        do
-        {
-            print(path)
-            try self.flir_img.save(as:path!)
-            print("Save success")
-            self.save_cnt += 1
-        } catch{
-            print("Save failed \(error)")
+        if self.flir_on{
+            let path = self.fm.getPathForImage(name: "flir_jpg/IMG_\(self.save_cnt)")?.path
+            do
+            {
+                print(path)
+                try self.flir_img.save(as:path!)
+                print("Save success")
+            } catch{
+                print("Save failed \(error)")
+            }
         }
+
         
-        // @TODO: Save iPhone jpg
+        // Save iPhone jpg
+        //let rgb_path = self.fm.getPathForImage(name: "rgb_jpg/IMG_\(self.save_cnt)")!
+        let rgb_path = self.fm.getPathForImageExt(subdir: "rgb_jpg", name: "IMG_\(self.save_cnt)", ext: "png")
+        self.fm.saveJpg(image: self.iPhone_rgb_img, path: rgb_path!)
         
-        // @TODO: Save iPhone Depth
         
+        // Save iPhone Depth
+        let depth_url = self.fm.getPathForImageExt(subdir: "depth_tiff", name: "IMG_\(self.save_cnt)", ext: "tiff")
+        guard let pixelBuffer = session.currentFrame?.sceneDepth?.depthMap else { return }
+        let ciImage = CIImage(cvPixelBuffer: pixelBuffer).oriented(tiffOrientation)
+        let context: CIContext! = CIContext()
+        do {
+            try context.writeTIFFRepresentation(of: ciImage, to: depth_url!, format: context.workingFormat, colorSpace: context.workingColorSpace!, options: [:])
+        } catch {
+            print("Save TIFF failed")
+            print(error)
+        }
         // @TODO: Save iPhone Point cloud
         
         // @TODO: Save GPS Coordinate, Roll, Pich, Yaw
-        
-        
+        saveJson()
+            
+    
         
     }
     // Metronome
@@ -171,6 +250,19 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
         }
         return orientation
     }
+    
+    var tiffOrientation: CGImagePropertyOrientation{
+        var tiffOrientation: CGImagePropertyOrientation
+        switch orientation {
+            case .unknown: tiffOrientation = .right
+            case .portrait: tiffOrientation = .right
+            case .portraitUpsideDown: tiffOrientation = .left
+            case .landscapeLeft: tiffOrientation = .up
+            case .landscapeRight: tiffOrientation = .down
+        }
+        return tiffOrientation
+    }
+
 
     override func viewDidLoad() {
         func initMatteGenerator() {
@@ -220,14 +312,42 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
         discovery = FLIRDiscovery()
         discovery?.delegate = self
         
-        fm.createFolderIfNeeded()
+        // fm.createFolderIfNeeded()
         // FLIR
         
         // Metronome
         reset_sliders()
         
-    }
+        // Init Location
+        // Ask for Authorisation from the User.
+        self.locationManager.requestAlwaysAuthorization()
 
+        // For use in foreground
+        self.locationManager.requestWhenInUseAuthorization()
+
+        if CLLocationManager.locationServicesEnabled() {
+            locationManager.delegate = self
+            locationManager.desiredAccuracy = kCLLocationAccuracyNearestTenMeters
+            locationManager.startUpdatingLocation()
+        }
+        
+        // Roll pich yaw
+//        if motionManager.isAccelerometerAvailable {
+//            motionManager.accelerometerUpdateInterval = 0.01
+//            motionManager.startAccelerometerUpdates(to: OperationQueue.main) { (data, error) in
+//                print(data)
+//            }
+//        }
+        
+        if motionManager.isDeviceMotionAvailable {
+            motionManager.deviceMotionUpdateInterval  = 0.2
+            motionManager.startDeviceMotionUpdates(to: OperationQueue.main) { (data, error) in
+                //print(data?.attitude)
+                self.outputRPY(data:data!.attitude)
+            }
+        }
+    }
+    
     // FLIR
     func requireCamera() {
         guard camera == nil else {
@@ -333,14 +453,17 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
     
     // FLIR
     @IBAction func connectDeviceClicked(_ sender: Any) {
+        self.flir_on = true
         discovery?.start(.lightning)
     }
 
     @IBAction func disconnectClicked(_ sender: Any) {
+        self.flir_on = false
         camera?.disconnect()
     }
 
     @IBAction func connectEmulatorClicked(_ sender: Any) {
+        self.flir_on = true
         discovery?.start(.emulator)
     }
 
@@ -352,6 +475,30 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate {
         }
     }
     // FLIR
+    
+    
+    // Location
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let locValue: CLLocationCoordinate2D = manager.location?.coordinate else { return }
+        guard let timestamp: Date = manager.location?.timestamp else { return }
+        var alt = manager.location?.altitude
+        
+        self.locValue = locValue
+        self.altitude = alt!
+        self.timestamp = timestamp
+        
+        //print("locations = \(locValue.latitude) \(locValue.longitude)")
+    }
+    
+    // Motion
+    func outputRPY(data: CMAttitude){
+       roll    = data.roll * (180.0 / M_PI)
+       pitch   = data.pitch * (180.0 / M_PI)
+       yaw     = data.yaw * (180.0 / M_PI)
+       rollLabel.text  = String(format: "%.2f°", roll)
+       pitchLabel.text = String(format: "%.2f°", pitch)
+       yawLabel.text   = String(format: "%.2f°", yaw)
+   }
 }
 
 
@@ -408,7 +555,7 @@ extension PointCloudViewController: MTKViewDelegate {
         self.iPhone_rgb_imgView.image = self.iPhone_rgb_img
         
         //self.depth_img = session.currentFrame?.depthMapTransformedImage(orientation: orientation, viewPort: depth_ROI)
-        self.depth_img = session.currentFrame?.depthmapTransfromedRescaledImage(orientation: orientation, viewPort: depth_ROI)
+        self.depth_img = session.currentFrame?.depthMapTransformedNormalizedImage(orientation: orientation, viewPort: depth_ROI)
         self.depthImageView.image = self.depth_img
         
         
@@ -513,7 +660,7 @@ extension PointCloudViewController : FLIRStreamDelegate {
                     self.imageView.image = thermal_image
                     
                     self.rgb_img = image.getPhoto()
-                    self.rgbimageView.image = self.rgb_img
+                    //self.rgbimageView.image = self.rgb_img
                     
                     if let measurements = image.measurements {
                         if measurements.getAllSpots().isEmpty {

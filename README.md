@@ -1,4 +1,11 @@
-# ExampleOfiOSLiDAR
+# Thermal + RGB + Depth for GEMINI Project
+<img width="400px" src="IMG_1216.PNG">
+
+
+
+
+# Original Repo from ExampleOfiOSLiDAR
+## ExampleOfiOSLiDAR
 
 This is a exsample code using a LiDAR scanner on iOS.
 

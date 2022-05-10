@@ -120,7 +120,7 @@ extension ARFrame {
         return UIImage(ciImage: screenTransformed(ciImage: ciImage, orientation: orientation, viewPort: viewPort))
     }
     
-    func depthMapTransformedNormalizedImage(orientation: UIInterfaceOrientation, viewPort: CGRect) -> UIImage? {
+    func depthMapTransformedHistNormalizedImage(orientation: UIInterfaceOrientation, viewPort: CGRect) -> UIImage? {
         guard let pixelBuffer = self.sceneDepth?.depthMap else { return nil }
         let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
         if let result = try? EqualizationImageProcessorKernel.apply(
@@ -132,9 +132,24 @@ extension ARFrame {
         return UIImage(ciImage: screenTransformed(ciImage: ciImage, orientation: orientation, viewPort: viewPort))
     }
     
+    func depthMapTransformedNormalizedImage(orientation: UIInterfaceOrientation, viewPort: CGRect) -> UIImage? {
+        guard let pixelBuffer = self.sceneDepth?.depthMap else { return nil }
+        let pixelBufferCopy: CVPixelBuffer!
+        do
+        {
+            try pixelBufferCopy = pixelBuffer.copy()
+
+        } catch{
+            pixelBufferCopy = pixelBuffer
+        }
+        pixelBufferCopy.normalize()
+        let ciImage = CIImage(cvPixelBuffer: pixelBufferCopy)
+        return UIImage(ciImage: screenTransformed(ciImage: ciImage, orientation: orientation, viewPort: viewPort))
+    }
+    
     func depthmapTransfromedRescaledImage(orientation: UIInterfaceOrientation, viewPort: CGRect) -> UIImage?    {
         guard let pixelBuffer = self.sceneDepth?.depthMap else { return nil }
-        let pixelBufferCopy: CVPixelBuffer
+        let pixelBufferCopy: CVPixelBuffer!
         do
         {
             try pixelBufferCopy = pixelBuffer.copy()
@@ -143,12 +158,11 @@ extension ARFrame {
             pixelBufferCopy = pixelBuffer
         }
         
-        pixelBufferCopy.normalize()
-        //pixelBuffer.normalize()
+        //pixelBufferCopy.normalize()
+        pixelBufferCopy.rescale(minPixel: 1.0, maxPixel: 10.0)
+
         let ciImage = CIImage(cvPixelBuffer: pixelBufferCopy)
         return UIImage(ciImage: screenTransformed(ciImage: ciImage, orientation: orientation, viewPort: viewPort))
-        
-       
     }
 
     func ConfidenceMapTransformedImage(orientation: UIInterfaceOrientation, viewPort: CGRect) -> UIImage? {

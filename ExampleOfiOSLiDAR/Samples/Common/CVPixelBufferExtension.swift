@@ -66,6 +66,28 @@ extension CVPixelBuffer {
     
     CVPixelBufferUnlockBaseAddress(self, CVPixelBufferLockFlags(rawValue: 0))
   }
+    
+    func rescale(minPixel : Float, maxPixel : Float) {
+      let width = CVPixelBufferGetWidth(self)
+      let height = CVPixelBufferGetHeight(self)
+      
+      CVPixelBufferLockBaseAddress(self, CVPixelBufferLockFlags(rawValue: 0))
+      let floatBuffer = unsafeBitCast(CVPixelBufferGetBaseAddress(self), to: UnsafeMutablePointer<Float>.self)
+      
+
+
+      let range = maxPixel - minPixel
+        
+
+      for y in stride(from: 0, to: height, by: 1) {
+        for x in stride(from: 0, to: width, by: 1) {
+          let pixel = floatBuffer[y * width + x]
+          floatBuffer[y * width + x] = (pixel - minPixel) / range
+        }
+      }
+      
+      CVPixelBufferUnlockBaseAddress(self, CVPixelBufferLockFlags(rawValue: 0))
+    }
 }
 
 public extension CVPixelBuffer {
