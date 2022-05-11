@@ -136,7 +136,7 @@ extension DepthMapViewController : ARSessionDelegate {
         //self.depth_img = session.currentFrame?.depthMapTransformedImage(orientation: orientation, viewPort: depth_ROI)
         self.depth_img = session.currentFrame?.depthMapTransformedNormalizedImage(orientation: orientation, viewPort: depth_ROI)
         
-        self.iPhone_rgb_img = frame.ColorTransformedImage(orientation: orientation, viewPort: depth_ROI)
+//        self.iPhone_rgb_img = frame.ColorTransformedImage(orientation: orientation, viewPort: depth_ROI)
         depthImageView.image = self.depth_img
     }
 }

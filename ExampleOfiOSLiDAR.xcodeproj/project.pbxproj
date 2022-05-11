@@ -40,14 +40,14 @@
 		5E22DC722821FFBE0098870B /* metronome.wav in Resources */ = {isa = PBXBuildFile; fileRef = 5E22DC712821FFBE0098870B /* metronome.wav */; };
 		5E22DC74282241520098870B /* CVPixelBufferExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E22DC73282241520098870B /* CVPixelBufferExtension.swift */; };
 		5E22DC76282444A30098870B /* LocalFileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E22DC75282444A30098870B /* LocalFileManager.swift */; };
-		5EAB24DA280A2BD50001D43E /* libavcodec.58.dylib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2420280A2BBF0001D43E /* libavcodec.58.dylib.framework */; };
-		5EAB24DB280A2BD50001D43E /* libavcodec.58.dylib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2420280A2BBF0001D43E /* libavcodec.58.dylib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		5EAB24DD280A2BD70001D43E /* libavdevice.58.dylib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2350280A2BBE0001D43E /* libavdevice.58.dylib.framework */; };
-		5EAB24DE280A2BD70001D43E /* libavdevice.58.dylib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2350280A2BBE0001D43E /* libavdevice.58.dylib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		5EAB24DF280A2BD90001D43E /* libavfilter.7.dylib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2353280A2BBE0001D43E /* libavfilter.7.dylib.framework */; };
-		5EAB24E0280A2BD90001D43E /* libavfilter.7.dylib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2353280A2BBE0001D43E /* libavfilter.7.dylib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		5EAB24E1280A2BDA0001D43E /* libavformat.58.dylib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2356280A2BBE0001D43E /* libavformat.58.dylib.framework */; };
-		5EAB24E2280A2BDA0001D43E /* libavformat.58.dylib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2356280A2BBE0001D43E /* libavformat.58.dylib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		5E303AA8282B19A10080B592 /* libavcodec.58.dylib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2420280A2BBF0001D43E /* libavcodec.58.dylib.framework */; };
+		5E303AA9282B19A10080B592 /* libavcodec.58.dylib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2420280A2BBF0001D43E /* libavcodec.58.dylib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		5E303AAA282B19A30080B592 /* libavdevice.58.dylib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2350280A2BBE0001D43E /* libavdevice.58.dylib.framework */; };
+		5E303AAB282B19A30080B592 /* libavdevice.58.dylib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2350280A2BBE0001D43E /* libavdevice.58.dylib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		5E303AAC282B19A40080B592 /* libavfilter.7.dylib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2353280A2BBE0001D43E /* libavfilter.7.dylib.framework */; };
+		5E303AAD282B19A40080B592 /* libavfilter.7.dylib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2353280A2BBE0001D43E /* libavfilter.7.dylib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		5E303AAE282B19A50080B592 /* libavformat.58.dylib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2356280A2BBE0001D43E /* libavformat.58.dylib.framework */; };
+		5E303AAF282B19A50080B592 /* libavformat.58.dylib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2356280A2BBE0001D43E /* libavformat.58.dylib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		5EAB24E3280A2BDB0001D43E /* libavutil.56.dylib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2354280A2BBE0001D43E /* libavutil.56.dylib.framework */; };
 		5EAB24E4280A2BDB0001D43E /* libavutil.56.dylib.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2354280A2BBE0001D43E /* libavutil.56.dylib.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		5EAB24E5280A2BDC0001D43E /* liblive666.dylib.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EAB2351280A2BBE0001D43E /* liblive666.dylib.framework */; };
@@ -89,16 +89,16 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				5EAB24DB280A2BD50001D43E /* libavcodec.58.dylib.framework in Embed Frameworks */,
-				5EAB24DE280A2BD70001D43E /* libavdevice.58.dylib.framework in Embed Frameworks */,
-				5EAB24E2280A2BDA0001D43E /* libavformat.58.dylib.framework in Embed Frameworks */,
-				5EAB24E0280A2BD90001D43E /* libavfilter.7.dylib.framework in Embed Frameworks */,
 				5EAB24E4280A2BDB0001D43E /* libavutil.56.dylib.framework in Embed Frameworks */,
 				5EAB24E6280A2BDC0001D43E /* liblive666.dylib.framework in Embed Frameworks */,
 				5EAB24EA280A2BDE0001D43E /* libswscale.5.dylib.framework in Embed Frameworks */,
+				5E303AA9282B19A10080B592 /* libavcodec.58.dylib.framework in Embed Frameworks */,
 				5EAB24EE280A2BE00001D43E /* ThermalSDK.framework in Embed Frameworks */,
+				5E303AAB282B19A30080B592 /* libavdevice.58.dylib.framework in Embed Frameworks */,
+				5E303AAF282B19A50080B592 /* libavformat.58.dylib.framework in Embed Frameworks */,
 				5EAB24EC280A2BDF0001D43E /* MeterLink.framework in Embed Frameworks */,
 				5EAB24E8280A2BDD0001D43E /* libswresample.3.dylib.framework in Embed Frameworks */,
+				5E303AAD282B19A40080B592 /* libavfilter.7.dylib.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -122,7 +122,7 @@
 		1E9A572726AAA5B40083CFDD /* PointCloudShaderTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PointCloudShaderTypes.h; sourceTree = "<group>"; };
 		1ED25C3A25C7EC6500CDB5AE /* Collision.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = Collision.storyboard; sourceTree = "<group>"; };
 		1ED25C3F25C7EC7800CDB5AE /* CollisionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollisionViewController.swift; sourceTree = "<group>"; };
-		1EEE225625A7039B00706DE8 /* ExampleOfiOSLiDAR.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExampleOfiOSLiDAR.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1EEE225625A7039B00706DE8 /* GEMINI_Data_Debug.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = GEMINI_Data_Debug.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1EEE225925A7039B00706DE8 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		1EEE225B25A7039B00706DE8 /* DepthMapViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DepthMapViewController.swift; sourceTree = "<group>"; };
 		1EEE225D25A7039B00706DE8 /* Experience.rcproject */ = {isa = PBXFileReference; lastKnownFileType = file.rcproject; path = Experience.rcproject; sourceTree = "<group>"; };
@@ -168,13 +168,13 @@
 			files = (
 				5EAB24E7280A2BDD0001D43E /* libswresample.3.dylib.framework in Frameworks */,
 				5EAB24E5280A2BDC0001D43E /* liblive666.dylib.framework in Frameworks */,
-				5EAB24DA280A2BD50001D43E /* libavcodec.58.dylib.framework in Frameworks */,
-				5EAB24DD280A2BD70001D43E /* libavdevice.58.dylib.framework in Frameworks */,
-				5EAB24E1280A2BDA0001D43E /* libavformat.58.dylib.framework in Frameworks */,
+				5E303AA8282B19A10080B592 /* libavcodec.58.dylib.framework in Frameworks */,
 				5EAB24E9280A2BDE0001D43E /* libswscale.5.dylib.framework in Frameworks */,
 				5EAB24EB280A2BDF0001D43E /* MeterLink.framework in Frameworks */,
 				5EAB24ED280A2BE00001D43E /* ThermalSDK.framework in Frameworks */,
-				5EAB24DF280A2BD90001D43E /* libavfilter.7.dylib.framework in Frameworks */,
+				5E303AAE282B19A50080B592 /* libavformat.58.dylib.framework in Frameworks */,
+				5E303AAA282B19A30080B592 /* libavdevice.58.dylib.framework in Frameworks */,
+				5E303AAC282B19A40080B592 /* libavfilter.7.dylib.framework in Frameworks */,
 				5EAB24E3280A2BDB0001D43E /* libavutil.56.dylib.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -258,7 +258,7 @@
 		1EEE225725A7039B00706DE8 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				1EEE225625A7039B00706DE8 /* ExampleOfiOSLiDAR.app */,
+				1EEE225625A7039B00706DE8 /* GEMINI_Data_Debug.app */,
 				1EEE226C25A7039C00706DE8 /* ExampleOfiOSLiDARTests.xctest */,
 				1EEE227725A7039C00706DE8 /* ExampleOfiOSLiDARUITests.xctest */,
 			);
@@ -393,7 +393,7 @@
 			);
 			name = ExampleOfiOSLiDAR;
 			productName = ExampleOfiOSLiDAR;
-			productReference = 1EEE225625A7039B00706DE8 /* ExampleOfiOSLiDAR.app */;
+			productReference = 1EEE225625A7039B00706DE8 /* GEMINI_Data_Debug.app */;
 			productType = "com.apple.product-type.application";
 		};
 		1EEE226B25A7039C00706DE8 /* ExampleOfiOSLiDARTests */ = {
@@ -599,6 +599,7 @@
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
 				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_CPP_STATIC_DESTRUCTORS = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
@@ -636,6 +637,7 @@
 					"DEBUG=1",
 					"$(inherited)",
 				);
+				GCC_THREADSAFE_STATICS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -660,6 +662,7 @@
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
 				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_CPP_STATIC_DESTRUCTORS = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
 				CLANG_ENABLE_OBJC_WEAK = YES;
@@ -691,6 +694,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_THREADSAFE_STATICS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -725,7 +729,7 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = ucdpaibl.app.ExampleOfiOSLiDAR;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = GEMINI_Data_Debug;
 				SWIFT_OBJC_BRIDGING_HEADER = ExampleOfiOSLiDAR/Samples/PointCloud/PointCloudShaderTypes.h;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -750,7 +754,7 @@
 					"@executable_path/Frameworks",
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = ucdpaibl.app.ExampleOfiOSLiDAR;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = GEMINI_Data;
 				SWIFT_OBJC_BRIDGING_HEADER = ExampleOfiOSLiDAR/Samples/PointCloud/PointCloudShaderTypes.h;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -785,7 +789,7 @@
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = P67QP7Z567;
+				DEVELOPMENT_TEAM = 6A74AS8B87;
 				INFOPLIST_FILE = ExampleOfiOSLiDARTests/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 14.3;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -826,7 +830,7 @@
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = P67QP7Z567;
+				DEVELOPMENT_TEAM = 6A74AS8B87;
 				INFOPLIST_FILE = ExampleOfiOSLiDARUITests/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

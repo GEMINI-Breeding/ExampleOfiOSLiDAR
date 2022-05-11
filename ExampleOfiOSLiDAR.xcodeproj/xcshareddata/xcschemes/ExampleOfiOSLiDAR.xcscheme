@@ -51,7 +51,7 @@
       </Testables>
    </TestAction>
    <LaunchAction
-      buildConfiguration = "Debug"
+      buildConfiguration = "Release"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       enableThreadSanitizer = "YES"
@@ -66,7 +66,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "1EEE225525A7039B00706DE8"
-            BuildableName = "ExampleOfiOSLiDAR.app"
+            BuildableName = "GEMINI_Data.app"
             BlueprintName = "ExampleOfiOSLiDAR"
             ReferencedContainer = "container:ExampleOfiOSLiDAR.xcodeproj">
          </BuildableReference>

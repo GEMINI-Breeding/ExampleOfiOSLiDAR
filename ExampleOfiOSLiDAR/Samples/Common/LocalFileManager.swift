@@ -194,7 +194,7 @@ class LocalFileManager{
     }
     
     func saveJpg(image: UIImage, path: URL) {
-        if let jpgData = image.jpegData(compressionQuality: 1.0)
+        if let jpgData = image.jpegData(compressionQuality: 0.75)
         {
             try? jpgData.write(to: path)
         }

@@ -147,6 +147,19 @@ extension ARFrame {
         return UIImage(ciImage: screenTransformed(ciImage: ciImage, orientation: orientation, viewPort: viewPort))
     }
     
+    func depthMapTransformedImageCIImage(orientation: CGImagePropertyOrientation) -> CIImage? {
+        guard let pixelBuffer = self.sceneDepth?.depthMap else { return nil }
+        let pixelBufferCopy: CVPixelBuffer!
+        do
+        {
+            try pixelBufferCopy = pixelBuffer.copy()
+
+        } catch{
+            pixelBufferCopy = pixelBuffer
+        }
+        return CIImage(cvPixelBuffer: pixelBufferCopy).oriented(orientation)
+    }
+    
     func depthmapTransfromedRescaledImage(orientation: UIInterfaceOrientation, viewPort: CGRect) -> UIImage?    {
         guard let pixelBuffer = self.sceneDepth?.depthMap else { return nil }
         let pixelBufferCopy: CVPixelBuffer!
@@ -172,10 +185,18 @@ extension ARFrame {
         return UIImage(ciImage: screenTransformed(ciImage: ciImage, orientation: orientation, viewPort: viewPort))
     }
     
-    func ColorTransformedImage(orientation: UIInterfaceOrientation, viewPort: CGRect) -> UIImage? {
+    func ColorTransformedImage(orientation: CGImagePropertyOrientation) -> UIImage? {
         let pixelBuffer = self.capturedImage
-        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
-        return UIImage(ciImage: screenTransformed(ciImage: ciImage, orientation: orientation, viewPort: viewPort))
+        let pixelBufferCopy: CVPixelBuffer!
+        do
+        {
+            try pixelBufferCopy = pixelBuffer.copy()
+
+        } catch{
+            pixelBufferCopy = pixelBuffer
+        }
+        let ciImage = CIImage(cvPixelBuffer: pixelBufferCopy).oriented(orientation)
+        return UIImage(ciImage: ciImage)
     }
 
     func confidenceMapToCIImage(pixelBuffer: CVPixelBuffer) -> CIImage? {
