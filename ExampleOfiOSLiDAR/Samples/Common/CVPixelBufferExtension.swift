@@ -56,9 +56,6 @@ extension CVPixelBuffer {
       }
     }
     
-    // Fixed Range
-      maxPixel = 10.0
-      minPixel = 0.0
       
     let range = maxPixel - minPixel
     for y in stride(from: 0, to: height, by: 1) {

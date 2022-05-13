@@ -215,35 +215,16 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         let depth_ROI = CGRect(x: 0, y: 0, width: 1440, height: 1920)
         //self.iPhone_rgb_img = session.currentFrame?.ColorTransformedImage(orientation: tiffOrientation)
         self.iPhone_rgb_img = session.currentFrame?.ColorTransformedImage(orientation: orientation, viewPort: depth_ROI)
-        
         self.iPhone_rgb_imgView.image = self.iPhone_rgb_img
         
         //self.depth_img = session.currentFrame?.depthMapTransformedImage(orientation: orientation, viewPort: depth_ROI)
         //self.depth_img = session.currentFrame?.depthMapTransformedNormalizedImage(orientation: orientation, viewPort: depth_ROI)
-        guard let pixelBuffer = session.currentFrame?.sceneDepth?.depthMap else { return }
-        let pixelBufferSave: CVPixelBuffer!
-        do
-        {
-            try pixelBufferSave = pixelBuffer.copy()
-
-        } catch{
-            pixelBufferSave = pixelBuffer
-        }
-        self.depth_img = CIImage(cvPixelBuffer: pixelBufferSave).oriented(tiffOrientation)
-        //self.depth_img = session.currentFrame?.depthMapTransformedImageCIImage(orientation: tiffOrientation)
+        //guard let pixelBuffer = session.currentFrame?.sceneDepth?.depthMap else { return }
+        //self.depth_img = CIImage(cvPixelBuffer: pixelBuffer).oriented(tiffOrientation)
+        self.depth_img = session.currentFrame?.depthMapTransformedImageCIImage(orientation: tiffOrientation)
+        self.depthImageView.image = session.currentFrame?.depthMapTransformedNormalizedImage(orientation: orientation, viewPort: depth_ROI)
         
-        let pixelBufferCopy: CVPixelBuffer!
-        do
-        {
-            try pixelBufferCopy = pixelBuffer.copy()
 
-        } catch{
-            pixelBufferCopy = pixelBuffer
-        }
-        
-        pixelBufferCopy.normalize()
-        let ciImage = CIImage(cvPixelBuffer: pixelBufferCopy).oriented(tiffOrientation)
-        self.depthImageView.image = UIImage(ciImage: ciImage)
     }
     
     func processFLIR(){
@@ -279,29 +260,20 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
                 //print(thermalImage.palette?.name)
                 
 
-                
                 let ir_image = thermalImage.getImage()!
-                //let ir_image = UIColor.orange.image(CGSize(width: 480, height: 640))
                 //let new_ir_image = ir_image.rotate(radians: 0) // Rotate 180 degrees
-                //saveJpg(image: ir_image!, path: ir_path!)
                 self.fm.savePng(image: ir_image, path: ir_path!)
-
-
+                
                 fusion.setFusionMode(VISUAL_MODE)
                 let rgb_image = thermalImage.getImage()!
-                //let rgb_image = UIColor.orange.image(CGSize(width: 480, height: 640))
                 //let new_rgb_image = rgb_image.rotate(radians: 0) // Rotate 180 degrees
-                //saveJpg(image: rgb_image!, path: rgb_path!)
                 self.fm.savePng(image: rgb_image, path: rgb_path!)
             }
             
             if let statistics = thermalImage.getStatistics() {
-                self.t_min = statistics.getMin().value
-                //minLabel.text = "\(self.t_min)"
-                self.t_max = statistics.getMax().value
-                //maxLabel.text = "\(self.t_max)"
-                self.t_average = statistics.getAverage().value
-                //averageLabel.text = "\(self.t_average)"
+                self.t_min = Double(statistics.getMin().asCelsius().value)
+                self.t_max = Double(statistics.getMax().asCelsius().value)
+                self.t_average = Double(statistics.getAverage().asCelsius().value)
             }
             
         }
@@ -312,6 +284,9 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     {
         // Update imges
         // updateImgs()
+        let depth_ROI = CGRect(x: 0, y: 0, width: 1440, height: 1920)
+        self.iPhone_rgb_img = session.currentFrame?.ColorTransformedImage(orientation: orientation, viewPort: depth_ROI)
+        self.depth_img = session.currentFrame?.depthMapTransformedImageCIImage(orientation: tiffOrientation)
         
         // Code for background saving process
         let bgQueue = OperationQueue()
@@ -323,13 +298,15 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
             
             // Save FLIR Image
             if self.flir_on{
-                if (self.flir_img != nil){
-                    let path = self.fm.getPathForImage(name: "flir_jpg/IMG_\(self.save_cnt)")?.path
-                    do
-                    {
-                        try self.flir_img.save(as:path!)
-                    } catch{
-                        print("Save failed \(error)")
+                self.renderQueue.sync {
+                    if (self.flir_img != nil){
+                        let path = self.fm.getPathForImage(name: "flir_jpg/IMG_\(self.save_cnt)")?.path
+                        do
+                        {
+                            try self.flir_img.save(as:path!)
+                        } catch{
+                            print("Save failed \(error)")
+                        }
                     }
                 }
             }
@@ -762,7 +739,6 @@ extension PointCloudViewController : FLIRStreamDelegate {
                 self.thermalStreamer?.withThermalImage { image in
                     
                     let thermal_image = self.thermalStreamer?.getImage()
-   
                     //self.thermal_img = thermal_image
                     self.imageView.image = thermal_image
                     self.rgb_img = image.getPhoto()
@@ -797,9 +773,14 @@ extension PointCloudViewController : FLIRStreamDelegate {
                         self.distanceLabel.text = "\((distance * 1000).rounded() / 1000)"
                         self.distanceSlider.value = Float(distance)
                     }
+                    if let remoteControl = self.camera?.getRemoteControl(){
+                        let batt = remoteControl.getBattery()
+                        let percent = batt?.getPercentage()
+                        self.batteryLabel.text = String(format:"%d %%", percent!)
+                    }
                     self.flir_img = image
-                    //print(self.flirBatt?.getPercentage())
-                    self.batteryLabel.text = String(format:"%d",50 )
+       
+                    
                 }
             }
         }

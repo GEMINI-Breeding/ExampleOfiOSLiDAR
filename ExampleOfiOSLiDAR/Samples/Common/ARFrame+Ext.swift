@@ -142,22 +142,14 @@ extension ARFrame {
         } catch{
             pixelBufferCopy = pixelBuffer
         }
-        pixelBufferCopy.normalize()
+        pixelBufferCopy.rescale(minPixel: 0.0, maxPixel: 10.0)
         let ciImage = CIImage(cvPixelBuffer: pixelBufferCopy)
         return UIImage(ciImage: screenTransformed(ciImage: ciImage, orientation: orientation, viewPort: viewPort))
     }
     
     func depthMapTransformedImageCIImage(orientation: CGImagePropertyOrientation) -> CIImage? {
         guard let pixelBuffer = self.sceneDepth?.depthMap else { return nil }
-        let pixelBufferCopy: CVPixelBuffer!
-        do
-        {
-            try pixelBufferCopy = pixelBuffer.copy()
-
-        } catch{
-            pixelBufferCopy = pixelBuffer
-        }
-        return CIImage(cvPixelBuffer: pixelBufferCopy).oriented(orientation)
+        return CIImage(cvPixelBuffer: pixelBuffer).oriented(orientation)
     }
     
     func depthmapTransfromedRescaledImage(orientation: UIInterfaceOrientation, viewPort: CGRect) -> UIImage?    {
