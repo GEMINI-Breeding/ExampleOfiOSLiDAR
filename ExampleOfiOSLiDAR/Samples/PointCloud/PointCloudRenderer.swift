@@ -169,6 +169,7 @@ class PointCloudRenderer {
         renderEncoder.setVertexTexture(CVMetalTextureGetTexture(confidenceTexture), index: 3)
         renderEncoder.drawPrimitives(type: .point, vertexStart: 0, vertexCount: numGridPoints)
         renderEncoder.endEncoding()
+        
     }
 
     static func makeRotateToARCameraMatrix(orientation: UIInterfaceOrientation) -> matrix_float4x4 {
@@ -193,4 +194,71 @@ class PointCloudRenderer {
         let rotationAngle = Float(cameraToDisplayRotation(orientation: orientation)) * .degreesToRadian
         return flipYZ * matrix_float4x4(simd_quaternion(rotationAngle, Float3(0, 0, 1)))
     }
+    
+    
+    func savePoints(){
+        guard let frame = session.currentFrame else {return}
+        let camera = frame.camera
+        let cameraIntrinsicsInversed = camera.intrinsics.inverse
+        let viewMatrix = camera.viewMatrix(for: orientation)
+        let viewMatrixInversed = viewMatrix.inverse
+        let projectionMatrix = camera.projectionMatrix(for: orientation, viewportSize: viewportSize, zNear: 0.001, zFar: 0)
+        guard let pixelBuffer = session.currentFrame?.sceneDepth?.depthMap else { return }
+        //pixelBuffer.normalize()
+        
+        //savePointsToFile()
+    }
+    
+    
+    //
+    
+//    var isSavingFile = false
+//
+//    func savePointsToFile() {
+//      guard !self.isSavingFile else { return }
+//      self.isSavingFile = true
+//        var currentPointCount = pointCloudUniforms.maxPoints
+//
+//        // 1
+//        var fileToWrite = ""
+//        let headers = ["ply", "format ascii 1.0", "element vertex \(currentPointCount)", "property float x", "property float y", "property float z", "property uchar red", "property uchar green", "property uchar blue", "property float cx", "property float cy", "property float depth", "property uchar alpha", "element face 0", "property list uchar int vertex_indices", "end_header"]
+//        for header in headers {
+//            fileToWrite += header
+//            fileToWrite += "\r\n"
+//        }
+//
+//
+//        // 2
+//        for i in 0..<currentPointCount {
+//
+//            // 3
+//            let point = gridPointsBuffer[i]
+//            let colors = point.color
+//
+//            // 4
+//            let red = colors.x * 255.0
+//            let green = colors.y * 255.0
+//            let blue = colors.z * 255.0
+//
+//            // 5
+//            let pvValue = "\(point.position.x) \(point.position.y) \(point.position.z) \(Int(red)) \(Int(green)) \(Int(blue)) \(point.texCoord.x) \(point.texCoord.y) \(point.depth)  255"
+//            fileToWrite += pvValue
+//            fileToWrite += "\r\n"
+//        }
+//        // 6
+//        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+//        let documentsDirectory = paths[0]
+//        let file = documentsDirectory.appendingPathComponent("ply_\(UUID().uuidString).ply")
+//
+//        do {
+//
+//            // 7
+//            try fileToWrite.write(to: file, atomically: true, encoding: String.Encoding.ascii)
+//            self.isSavingFile = false
+//        } catch {
+//            print("Failed to write PLY file", error)
+//        }
+//    }
+    //
+    
 }

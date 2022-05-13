@@ -43,7 +43,8 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     // FLIR
     var discovery: FLIRDiscovery?
     var camera: FLIRCamera?
-
+    var flirBatt: FLIRBattery?
+    
     @IBOutlet weak var centerSpotLabel: UILabel!
     @IBOutlet weak var distanceLabel: UILabel!
     @IBOutlet weak var distanceSlider: UISlider!
@@ -71,10 +72,23 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     let renderQueue = DispatchQueue(label: "render")
 
     var flir_on: Bool = false
+    
+    var pm:FLIRPaletteManager = FLIRPaletteManager.init()
+    var t_min:Double!
+    var t_max:Double!
+    var t_average:Double!
+    @IBOutlet weak var minLabel: UILabel!
+    @IBOutlet weak var maxLabel: UILabel!
+    @IBOutlet weak var averageLabel: UILabel!
+    @IBOutlet weak var batteryLabel: UILabel!
+    let thermalImage:FLIRThermalImageFile! = FLIRThermalImageFile()
     // FLIR
     
     let locationManager = CLLocationManager()
     var locValue =  CLLocationCoordinate2D()
+    @IBOutlet weak var LatLabel: UILabel!
+    @IBOutlet weak var LonLabel: UILabel!
+    @IBOutlet weak var altitudeLabel: UILabel!
     var altitude: Double = 0.0
     var timestamp: Date = Date()
     
@@ -87,6 +101,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     @IBOutlet weak var yawLabel: UILabel!
     //////////
     var depth_img: CIImage!
+    var rgb_img: UIImage!
     @IBOutlet weak var depthImageView: UIImageView!
     var iPhone_rgb_img: UIImage!
     @IBOutlet weak var iPhone_rgb_imgView: UIImageView!
@@ -95,6 +110,10 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     // Metronome - Timelapse
     @IBOutlet weak var bpmLabel: UILabel!
     @IBOutlet weak var tickLabel: UILabel!
+    
+    // Point cloud
+    var isSavingFile = false
+    private lazy var library: MTLLibrary = device.makeDefaultLibrary()!
     
     let myMetronome = Metronome()
 
@@ -146,7 +165,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     }
     
     private func updateBpm() {
-        let metronomeBpm = Int(myMetronome.bpm)
+        //let metronomeBpm = Int(myMetronome.bpm)
         //bpmLabel.text = "\(metronomeBpm)"
         self.shootingPeriodLabel.text = "\(self.shootingPeriodInt) sec"
     }
@@ -166,6 +185,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         let personArray =  [
                             ["gps": ["latitude": "\(self.locValue.latitude)", "longitude": "\(self.locValue.longitude)", "altitude": "\(self.altitude)"]],
                             ["attitude": ["roll": "\(self.roll)", "pitch": "\(self.pitch)", "yaw": "\(self.yaw)"]],
+                            ["thermal": ["min": self.t_min, "max": self.t_max, "avg": self.t_average]],
                             ["timestamp": "\(self.timestamp)"],
                             ]
         
@@ -193,7 +213,9 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     {
         // iPhone RGB & Depth
         let depth_ROI = CGRect(x: 0, y: 0, width: 1440, height: 1920)
-        self.iPhone_rgb_img = session.currentFrame?.ColorTransformedImage(orientation: tiffOrientation)
+        //self.iPhone_rgb_img = session.currentFrame?.ColorTransformedImage(orientation: tiffOrientation)
+        self.iPhone_rgb_img = session.currentFrame?.ColorTransformedImage(orientation: orientation, viewPort: depth_ROI)
+        
         self.iPhone_rgb_imgView.image = self.iPhone_rgb_img
         
         //self.depth_img = session.currentFrame?.depthMapTransformedImage(orientation: orientation, viewPort: depth_ROI)
@@ -224,6 +246,68 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         self.depthImageView.image = UIImage(ciImage: ciImage)
     }
     
+    func processFLIR(){
+        
+        //let thermalImage = FLIRThermalImageFile()
+        
+        let path = self.fm.getPathForImage(name: "flir_jpg/IMG_\(self.save_cnt)")?.path
+        
+        if !FileManager.default.fileExists(atPath: path!)
+        {
+
+        
+        
+            thermalImage.open(path!)
+            thermalImage.setTemperatureUnit(.CELSIUS)
+
+            let theFileName = (path! as NSString).lastPathComponent
+            let ir_name = theFileName.replacingOccurrences(of: ".jpg", with: "_IR")
+            let rgb_name = theFileName.replacingOccurrences(of: ".jpg", with: "_RGB")
+            
+            let ir_path = self.fm.getPathForImageExt(subdir: "flir_processed", name: ir_name, ext: "png")
+            let rgb_path = self.fm.getPathForImageExt(subdir: "flir_processed", name: rgb_name, ext: "png")
+            
+            
+            if let fusion = thermalImage.getFusion() {
+                //fusion.setFusionMode(FUSION_MSX_MODE)
+                //msxImageView.image = thermalImage.getImage()
+
+                fusion.setFusionMode(IR_MODE)
+                //print(thermalImage.palette?.name)
+                //thermalImage.palette = FLIRPalette.init()
+                thermalImage.palette = self.pm.gray
+                //print(thermalImage.palette?.name)
+                
+
+                
+                let ir_image = thermalImage.getImage()!
+                //let ir_image = UIColor.orange.image(CGSize(width: 480, height: 640))
+                //let new_ir_image = ir_image.rotate(radians: 0) // Rotate 180 degrees
+                //saveJpg(image: ir_image!, path: ir_path!)
+                self.fm.savePng(image: ir_image, path: ir_path!)
+
+
+                fusion.setFusionMode(VISUAL_MODE)
+                let rgb_image = thermalImage.getImage()!
+                //let rgb_image = UIColor.orange.image(CGSize(width: 480, height: 640))
+                //let new_rgb_image = rgb_image.rotate(radians: 0) // Rotate 180 degrees
+                //saveJpg(image: rgb_image!, path: rgb_path!)
+                self.fm.savePng(image: rgb_image, path: rgb_path!)
+            }
+            
+            if let statistics = thermalImage.getStatistics() {
+                self.t_min = statistics.getMin().value
+                //minLabel.text = "\(self.t_min)"
+                self.t_max = statistics.getMax().value
+                //maxLabel.text = "\(self.t_max)"
+                self.t_average = statistics.getAverage().value
+                //averageLabel.text = "\(self.t_average)"
+            }
+            
+        }
+
+    }
+    
     func saveFiles()
     {
         // Update imges
@@ -249,9 +333,17 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
                     }
                 }
             }
+            
 
             // Save iPhone jpg
             let rgb_path = self.fm.getPathForImageExt(subdir: "rgb_jpg", name: "IMG_\(self.save_cnt)", ext: "jpg")
+            // let cameraResolution = Float2(Float(self.session.currentFrame?.camera.imageResolution.width ?? 0), Float(self.session.currentFrame?.camera.imageResolution.height ?? 0))
+            
+//            let targetSize = CGSize(width: Int(cameraResolution[1]), height: Int(cameraResolution[0]))
+//            self.iPhone_rgb_img = self.iPhone_rgb_img.scalePreservingAspectRatio(
+//                targetSize: targetSize
+//            )
+            
             self.fm.saveJpg(image: self.iPhone_rgb_img, path: rgb_path!)
             
             // Save iPhone Depth
@@ -263,12 +355,23 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
                 print("Save TIFF failed")
                 print(error)
             }
-            // @TODO: Save iPhone Point cloud
+            // @TODO: Save iPhone Point cloud *.ply file
+            self.renderer.savePoints()
+            
+            // Process FLIR Image
+            if self.flir_on{
+                if (self.flir_img != nil){
+                    //self.processFLIR()
+                }
+            }
             
             // Save GPS Coordinate, Roll, Pich, Yaw
             self.saveJson()
+            
+            
         }
         
+
     }
     // Metronome
     
@@ -379,6 +482,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
                 self.outputRPY(data:data!.attitude)
             }
         }
+        
     }
     
     // FLIR
@@ -388,6 +492,11 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         }
         let camera = FLIRCamera()
         self.camera = camera
+        let battery = FLIRBattery()
+        self.flirBatt = battery
+        //try? self.flirBatt?.subscribePercentage()
+  
+        
         camera.delegate = self
     }
     
@@ -482,18 +591,25 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         self.altitude = alt
         self.timestamp = timestamp
         
+        LatLabel.text = String(format:"Lat: %.6f", locValue.latitude)
+        LonLabel.text = String(format:"Lon: %.6f", locValue.longitude)
+        
+        altitudeLabel.text = String(format:"H: %.2f", alt)
+
         //print("locations = \(locValue.latitude) \(locValue.longitude)")
     }
     
     // Motion
     func outputRPY(data: CMAttitude){
-       roll    = data.roll * (180.0 / M_PI)
-       pitch   = data.pitch * (180.0 / M_PI)
-       yaw     = data.yaw * (180.0 / M_PI)
+       roll    = data.roll * (180.0 / .pi)
+       pitch   = data.pitch * (180.0 / .pi)
+       yaw     = data.yaw * (180.0 / .pi)
        rollLabel.text  = String(format: "R:%.2f°", roll)
        pitchLabel.text = String(format: "P:%.2f°", pitch)
        yawLabel.text   = String(format: "Y:%.2f°", yaw)
    }
+    
+
 }
 
 
@@ -538,13 +654,16 @@ extension PointCloudViewController: MTKViewDelegate {
         commandBuffer.present(drawable)
         
         commandBuffer.commit()
-        
+
         commandBuffer.waitUntilCompleted()
         
         // RGB, Depth
         updateImgs()
         //if myMetronome.enabled==false{
         //}
+        
+   
+        
     }
 }
 
@@ -646,7 +765,7 @@ extension PointCloudViewController : FLIRStreamDelegate {
    
                     //self.thermal_img = thermal_image
                     self.imageView.image = thermal_image
-                    //self.rgb_img = image.getPhoto()
+                    self.rgb_img = image.getPhoto()
                     //self.rgbimageView.image = self.rgb_img
                     
                     if let measurements = image.measurements {
@@ -662,15 +781,25 @@ extension PointCloudViewController : FLIRStreamDelegate {
                             self.centerSpotLabel.text = spot.getValue().description()
                         }
                     }
+                    
+                    if let statistics = image.getStatistics() {
+                        self.t_min = Double(statistics.getMin().asCelsius().value)
+                        self.minLabel.text = String(format:"%.2f", self.t_min)
+                        self.t_max = Double(statistics.getMax().asCelsius().value)
+                        self.maxLabel.text = String(format:"%.2f", self.t_max)
+                        self.t_average = Double(statistics.getAverage().asCelsius().value)
+                        self.averageLabel.text = String(format:"%.2f", self.t_average)
+                    }
+                    
                     if let remoteControl = self.camera?.getRemoteControl(),
                        let fusionController = remoteControl.getFusionController() {
                         let distance = fusionController.getFusionDistance()
                         self.distanceLabel.text = "\((distance * 1000).rounded() / 1000)"
                         self.distanceSlider.value = Float(distance)
-                        
-                        
                     }
                     self.flir_img = image
+                    //print(self.flirBatt?.getPercentage())
+                    self.batteryLabel.text = String(format:"%d",50 )
                 }
             }
         }
