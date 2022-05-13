@@ -77,6 +77,13 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     var t_min:Double!
     var t_max:Double!
     var t_average:Double!
+    var batteryPercent: Double! = Double(0.0)
+    var batteryPercenPrev: Double! = Double(-1)
+    var batteryStartTime:Double!
+    var batteryConsumeRate: Double! = Double(100.0 / 60.0) // 100 percent per 60min
+    var batteryTimeDiff:Double! = 0.0
+    
+    let batteryStopWatch:Stopwatch! = Stopwatch()
     @IBOutlet weak var minLabel: UILabel!
     @IBOutlet weak var maxLabel: UILabel!
     @IBOutlet weak var averageLabel: UILabel!
@@ -180,13 +187,26 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     func saveJson(){
         //print("locations = \(self.locValue.latitude) \(self.locValue.longitude)")
         //print(self.altitude)
-        
+
+        // let cameraResolution = Float2(Float(self.session.currentFrame?.camera.imageResolution.width ?? 0), Float(self.session.currentFrame?.camera.imageResolution.height ?? 0))
+        let iCamIntrinsics = self.session.currentFrame?.camera.intrinsics.transpose // Change columns to rows
+        let iCamIntrinsicsString = String(format: "[[%f,%f,%f],[%f,%f,%f],[%f,%f,%f]]",
+                                    (iCamIntrinsics![0][0]),
+                                    (iCamIntrinsics![0][1]),
+                                    (iCamIntrinsics![0][2]),
+                                    (iCamIntrinsics![1][0]),
+                                    (iCamIntrinsics![1][1]),
+                                    (iCamIntrinsics![1][2]),
+                                    (iCamIntrinsics![2][0]),
+                                    (iCamIntrinsics![2][1]),
+                                    (iCamIntrinsics![2][2])
+                                    )
         //@TODO: Add more metadata
-        let personArray =  [
+        let personArray =  [["info": ["timestamp": "\(self.timestamp)", "FLIRBatteryPercent": "\(self.batteryPercent)",
+                                    "iCamIntrinsics": iCamIntrinsicsString]],
                             ["gps": ["latitude": "\(self.locValue.latitude)", "longitude": "\(self.locValue.longitude)", "altitude": "\(self.altitude)"]],
                             ["attitude": ["roll": "\(self.roll)", "pitch": "\(self.pitch)", "yaw": "\(self.yaw)"]],
                             ["thermal": ["min": self.t_min, "max": self.t_max, "avg": self.t_average]],
-                            ["timestamp": "\(self.timestamp)"],
                             ]
         
         // Get the url of Persons.json in document directory
@@ -233,11 +253,8 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         
         let path = self.fm.getPathForImage(name: "flir_jpg/IMG_\(self.save_cnt)")?.path
         
-        if !FileManager.default.fileExists(atPath: path!)
+        if FileManager.default.fileExists(atPath: path!)
         {
-
-        
-        
             thermalImage.open(path!)
             thermalImage.setTemperatureUnit(.CELSIUS)
 
@@ -299,14 +316,28 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
             // Save FLIR Image
             if self.flir_on{
                 self.renderQueue.sync {
-                    if (self.flir_img != nil){
-                        let path = self.fm.getPathForImage(name: "flir_jpg/IMG_\(self.save_cnt)")?.path
-                        do
-                        {
-                            try self.flir_img.save(as:path!)
-                        } catch{
-                            print("Save failed \(error)")
-                        }
+//                        do {
+//                            try self.thermalStreamer?.update()
+//                        } catch {
+//                            NSLog("update error \(error)")
+//                        }
+                        DispatchQueue.main.sync {
+//                            self.thermalStreamer?.withThermalImage { image in
+//                                self.flir_img = image
+//                                let thermal_image = self.thermalStreamer?.getImage()
+//                                self.imageView.image = thermal_image
+//                            }
+                                
+                            if (self.flir_img != nil){
+                                let path = self.fm.getPathForImage(name: "flir_jpg/IMG_\(self.save_cnt)")?.path
+                                do
+                                {
+                                    try self.flir_img.save(as:path!)
+                                    self.processFLIR()
+                                } catch{
+                                    print("Save failed \(error)")
+                                }
+                            }
                     }
                 }
             }
@@ -335,13 +366,8 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
             // @TODO: Save iPhone Point cloud *.ply file
             self.renderer.savePoints()
             
-            // Process FLIR Image
-            if self.flir_on{
-                if (self.flir_img != nil){
-                    //self.processFLIR()
-                }
-            }
-            
+
+
             // Save GPS Coordinate, Roll, Pich, Yaw
             self.saveJson()
             
@@ -469,8 +495,6 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         }
         let camera = FLIRCamera()
         self.camera = camera
-        let battery = FLIRBattery()
-        self.flirBatt = battery
         //try? self.flirBatt?.subscribePercentage()
   
         
@@ -535,6 +559,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     // FLIR
     @IBAction func connectDeviceClicked(_ sender: Any) {
         self.flir_on = true
+        self.batteryStopWatch.start()
         discovery?.start(.lightning)
     }
 
@@ -726,14 +751,18 @@ extension PointCloudViewController : FLIRStreamDelegate {
     }
 
     func onImageReceived() {
+        
+        
         renderQueue.async {
+            
+            // Update display while not recording
             do {
                 try self.thermalStreamer?.update()
             } catch {
                 NSLog("update error \(error)")
             }
                 
-            
+
             DispatchQueue.main.async {
                 
                 self.thermalStreamer?.withThermalImage { image in
@@ -773,17 +802,54 @@ extension PointCloudViewController : FLIRStreamDelegate {
                         self.distanceLabel.text = "\((distance * 1000).rounded() / 1000)"
                         self.distanceSlider.value = Float(distance)
                     }
+                    
+                    // Update battery info
                     if let remoteControl = self.camera?.getRemoteControl(){
                         let batt = remoteControl.getBattery()
                         let percent = batt?.getPercentage()
-                        self.batteryLabel.text = String(format:"%d %%", percent!)
+                        var estimatedTime:Double = 0.0
+                        
+                        if percent! > 0{
+                            self.batteryPercent = Double(percent!)
+                            if self.batteryPercent < self.batteryPercenPrev{
+                                self.batteryStopWatch.stop()
+                                self.batteryTimeDiff = self.batteryStopWatch.durationSeconds()
+                                if self.batteryTimeDiff > 0.0 {
+                                    let consumRate = ((self.batteryPercenPrev - self.batteryPercent) / self.batteryTimeDiff) * 60.0 // Consume per min
+                                    self.batteryConsumeRate = (self.batteryConsumeRate + consumRate) / 2.0
+                                }
+                                self.batteryStopWatch.start()
+                                
+                            }
+                            self.batteryPercenPrev = self.batteryPercent
+                            
+                            estimatedTime = Double(self.batteryPercent) / self.batteryConsumeRate
+                            self.batteryLabel.text = String(format:"FLIR:%d %% (%.1lf min left)", percent!, estimatedTime)
+                        }
                     }
-                    self.flir_img = image
-       
                     
+                    self.flir_img = image
                 }
             }
         }
+        
     }
-    
+}
+
+public class Stopwatch {
+    public init() { }
+    private var start_: TimeInterval = 0.0;
+    private var end_: TimeInterval = 0.0;
+
+    public func start() {
+        start_ = NSDate().timeIntervalSince1970;
+    }
+
+    public func stop() {
+        end_ = NSDate().timeIntervalSince1970;
+    }
+
+    public func durationSeconds() -> TimeInterval {
+        return end_ - start_;
+    }
 }
