@@ -149,7 +149,15 @@ extension ARFrame {
     
     func depthMapTransformedImageCIImage(orientation: CGImagePropertyOrientation) -> CIImage? {
         guard let pixelBuffer = self.sceneDepth?.depthMap else { return nil }
-        return CIImage(cvPixelBuffer: pixelBuffer).oriented(orientation)
+        let pixelBufferCopy: CVPixelBuffer!
+        do
+        {
+            try pixelBufferCopy = pixelBuffer.copy()
+
+        } catch{
+            pixelBufferCopy = pixelBuffer
+        }
+        return CIImage(cvPixelBuffer: pixelBufferCopy).oriented(orientation)
     }
     
     func depthmapTransfromedRescaledImage(orientation: UIInterfaceOrientation, viewPort: CGRect) -> UIImage?    {
@@ -179,7 +187,15 @@ extension ARFrame {
     
     func ColorTransformedImage(orientation: UIInterfaceOrientation, viewPort: CGRect) -> UIImage? {
         let pixelBuffer = self.capturedImage
-        let ciImage = CIImage(cvPixelBuffer: pixelBuffer)
+        let pixelBufferCopy: CVPixelBuffer!
+        do
+        {
+            try pixelBufferCopy = pixelBuffer.copy()
+
+        } catch{
+            pixelBufferCopy = pixelBuffer
+        }
+        let ciImage = CIImage(cvPixelBuffer: pixelBufferCopy)
         return UIImage(ciImage: screenTransformed(ciImage: ciImage, orientation: orientation, viewPort: viewPort),scale: 1.0, orientation: .up)
     }
 

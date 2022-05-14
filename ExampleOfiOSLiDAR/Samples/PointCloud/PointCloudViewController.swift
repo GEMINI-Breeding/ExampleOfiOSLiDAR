@@ -264,8 +264,6 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         //self.depth_img = CIImage(cvPixelBuffer: pixelBuffer).oriented(tiffOrientation)
         self.depth_img = session.currentFrame?.depthMapTransformedImageCIImage(orientation: tiffOrientation)
         self.depthImageView.image = session.currentFrame?.depthMapTransformedNormalizedImage(orientation: orientation, viewPort: depth_ROI)
-        
-
     }
     
     func processFLIR(){
@@ -604,29 +602,8 @@ extension PointCloudViewController: MTKViewDelegate {
             return commandBuffer.makeRenderCommandEncoder(descriptor: rpd!)
         }
         
-        // Point clouds
-        guard let drawable = view.currentDrawable else {return}
-        
-        let commandBuffer = commandQueue.makeCommandBuffer()!
-        
-        guard let (textureY, textureCbCr) = session.currentFrame?.buildCapturedImageTextures(textureCache: textureCache) else {return}
 
-        guard let (depthTexture, confidenceTexture) = session.currentFrame?.buildDepthTextures(textureCache: textureCache) else {return}
 
-        guard let encoder = buildRenderEncoder(commandBuffer) else {return}
-        
-        renderer.update(commandBuffer, renderEncoder: encoder, capturedImageTextureY: textureY, capturedImageTextureCbCr: textureCbCr, depthTexture: depthTexture, confidenceTexture: confidenceTexture)
-                
-        commandBuffer.present(drawable)
-        
-        commandBuffer.commit()
-
-        commandBuffer.waitUntilCompleted()
-        
-        // RGB, Depth
-        updateImgs()
-        
-        
         if self.timerOn{
             // Check queue empty and flir save ends
             if self.saveImgQueue.operationCount==0 && self.saveNowFlir == false{
@@ -634,6 +611,7 @@ extension PointCloudViewController: MTKViewDelegate {
                 self.saveTimer.stop()
                 if self.saveTimer.durationSeconds() > Double(self.shootingPeriodInt){
                     self.saveNow = true
+                    self.updateImgs()
                     // tick animation
                     self.animateTick()
                     self.shootingPeriodLabel.text = String(format: "%.2f sec", self.saveTimer.durationSeconds())
@@ -646,6 +624,29 @@ extension PointCloudViewController: MTKViewDelegate {
         }
         else{
             self.saveTimer.start()
+            self.updateImgs()
+        }
+        
+        
+        if self.timerOn == false || (self.timerOn == true && self.saveNow){
+            // Point clouds
+            guard let drawable = view.currentDrawable else {return}
+            
+            let commandBuffer = commandQueue.makeCommandBuffer()!
+            
+            guard let (textureY, textureCbCr) = session.currentFrame?.buildCapturedImageTextures(textureCache: textureCache) else {return}
+            
+            guard let (depthTexture, confidenceTexture) = session.currentFrame?.buildDepthTextures(textureCache: textureCache) else {return}
+            
+            guard let encoder = buildRenderEncoder(commandBuffer) else {return}
+            
+            renderer.update(commandBuffer, renderEncoder: encoder, capturedImageTextureY: textureY, capturedImageTextureCbCr: textureCbCr, depthTexture: depthTexture, confidenceTexture: confidenceTexture)
+            
+            commandBuffer.present(drawable)
+            
+            commandBuffer.commit()
+            
+            commandBuffer.waitUntilCompleted()
         }
         
         // Work for manual & timer capture
@@ -758,83 +759,85 @@ extension PointCloudViewController : FLIRStreamDelegate {
 
     func onImageReceived() {
         
-        
-        renderQueue.async {
-            
-            // Update display while not recording
-            do {
-                try self.thermalStreamer?.update()
-            } catch {
-                NSLog("update error \(error)")
-            }
+        if self.timerOn == false || (self.timerOn == true && self.saveNowFlir){
+            renderQueue.async {
                 
-
-            DispatchQueue.main.async {
+                // Update display while not recording
+                do {
+                    try self.thermalStreamer?.update()
+                } catch {
+                    NSLog("update error \(error)")
+                }
                 
-                self.thermalStreamer?.withThermalImage { image in
+                DispatchQueue.main.async {
                     
-                    let thermal_image = self.thermalStreamer?.getImage()
-                    //self.thermal_img = thermal_image
-                    self.imageView.image = thermal_image
-                    self.rgb_img = image.getPhoto()
-                    //self.rgbimageView.image = self.rgb_img
-                    
-                    if let measurements = image.measurements {
-                        if measurements.getAllSpots().isEmpty {
-                            do {
-                                try measurements.addSpot(CGPoint(x: CGFloat(image.getWidth()) / 2,
-                                                                 y: CGFloat(image.getHeight()) / 2))
-                            } catch {
-                                NSLog("addSpot error \(error)")
-                            }
-                        }
-                        if let spot = measurements.getAllSpots().first {
-                            self.centerSpotLabel.text = spot.getValue().description()
-                        }
-                    }
-                    
-                    if let statistics = image.getStatistics() {
-                        self.t_min = Double(statistics.getMin().asCelsius().value)
-                        self.minLabel.text = String(format:"%.2f", self.t_min)
-                        self.t_max = Double(statistics.getMax().asCelsius().value)
-                        self.maxLabel.text = String(format:"%.2f", self.t_max)
-                        self.t_average = Double(statistics.getAverage().asCelsius().value)
-                        self.averageLabel.text = String(format:"%.2f", self.t_average)
-                    }
-                    
-                    if let remoteControl = self.camera?.getRemoteControl(),
-                       let fusionController = remoteControl.getFusionController() {
-                        let distance = fusionController.getFusionDistance()
-                        self.distanceLabel.text = "\((distance * 1000).rounded() / 1000)"
-                        self.distanceSlider.value = Float(distance)
-                    }
-                    
-                    // Update battery info
-                    if let remoteControl = self.camera?.getRemoteControl(){
-                        let batt = remoteControl.getBattery()
-                        let percent = batt?.getPercentage()
-                        var estimatedTime:Double = 0.0
+                    self.thermalStreamer?.withThermalImage { image in
                         
-                        if percent! > 0{
-                            self.batteryPercent = Double(percent!)
-                            if self.batteryPercent < self.batteryPercenPrev{
-                                self.batteryStopWatch.stop()
-                                self.batteryTimeDiff = self.batteryStopWatch.durationSeconds()
-                                if self.batteryTimeDiff > 0.0 {
-                                    let consumRate = ((self.batteryPercenPrev - self.batteryPercent) / self.batteryTimeDiff) * 60.0 // Consume per min
-                                    self.batteryConsumeRate = (self.batteryConsumeRate + consumRate) / 2.0
+                        
+                        let thermal_image = self.thermalStreamer?.getImage()
+                        //self.thermal_img = thermal_image
+                        self.imageView.image = thermal_image
+                        self.rgb_img = image.getPhoto()
+                        //self.rgbimageView.image = self.rgb_img
+                        
+                        if let measurements = image.measurements {
+                            if measurements.getAllSpots().isEmpty {
+                                do {
+                                    try measurements.addSpot(CGPoint(x: CGFloat(image.getWidth()) / 2,
+                                                                     y: CGFloat(image.getHeight()) / 2))
+                                } catch {
+                                    NSLog("addSpot error \(error)")
                                 }
-                                self.batteryStopWatch.start()
-                                
                             }
-                            self.batteryPercenPrev = self.batteryPercent
-                            
-                            estimatedTime = Double(self.batteryPercent) / self.batteryConsumeRate
-                            self.batteryLabel.text = String(format:"FLIR:%d %% (%.1lf min left)", percent!, estimatedTime)
+                            if let spot = measurements.getAllSpots().first {
+                                self.centerSpotLabel.text = spot.getValue().description()
+                            }
                         }
+                        
+                        if let statistics = image.getStatistics() {
+                            self.t_min = Double(statistics.getMin().asCelsius().value)
+                            self.minLabel.text = String(format:"%.2f", self.t_min)
+                            self.t_max = Double(statistics.getMax().asCelsius().value)
+                            self.maxLabel.text = String(format:"%.2f", self.t_max)
+                            self.t_average = Double(statistics.getAverage().asCelsius().value)
+                            self.averageLabel.text = String(format:"%.2f", self.t_average)
+                        }
+                        
+                        if let remoteControl = self.camera?.getRemoteControl(),
+                           let fusionController = remoteControl.getFusionController() {
+                            let distance = fusionController.getFusionDistance()
+                            self.distanceLabel.text = "\((distance * 1000).rounded() / 1000)"
+                            self.distanceSlider.value = Float(distance)
+                        }
+                        
+                        // Update battery info
+                        if let remoteControl = self.camera?.getRemoteControl(){
+                            let batt = remoteControl.getBattery()
+                            let percent = batt?.getPercentage()
+                            var estimatedTime:Double = 0.0
+                            
+                            if percent! > 0{
+                                self.batteryPercent = Double(percent!)
+                                if self.batteryPercent < self.batteryPercenPrev{
+                                    self.batteryStopWatch.stop()
+                                    self.batteryTimeDiff = self.batteryStopWatch.durationSeconds()
+                                    if self.batteryTimeDiff > 0.0 {
+                                        let consumRate = ((self.batteryPercenPrev - self.batteryPercent) / self.batteryTimeDiff) * 60.0 // Consume per min
+                                        self.batteryConsumeRate = (self.batteryConsumeRate + consumRate) / 2.0
+                                    }
+                                    self.batteryStopWatch.start()
+                                    
+                                }
+                                self.batteryPercenPrev = self.batteryPercent
+                                
+                                estimatedTime = Double(self.batteryPercent) / self.batteryConsumeRate
+                                self.batteryLabel.text = String(format:"FLIR:%d %% (%.1lf min left)", percent!, estimatedTime)
+                            }
+                        }
+                        
+                        self.flir_img = image
                     }
                     
-                    self.flir_img = image
                     
                     if self.saveNowFlir{
                         let path = self.fm.getPathForImage(name: "flir_jpg/IMG_\(self.save_cnt)")?.path
