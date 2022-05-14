@@ -24,7 +24,6 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
 
     
     @IBOutlet weak var mtkView: MTKView!
-    
     // ARKit
     private var session: ARSession!
     var alphaTexture: MTLTexture?
@@ -52,6 +51,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     @IBOutlet weak var rgbimageView: UIImageView!
     
     @IBOutlet weak var shootingPeriodLabel: UILabel!
+    @IBOutlet weak var actualShootingPeriod: UILabel!
     @IBOutlet weak var shootingPeriodSlider: UISlider!
     
 
@@ -82,6 +82,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     var batteryStartTime:Double!
     var batteryConsumeRate: Double! = Double(100.0 / 60.0) // 100 percent per 60min
     var batteryTimeDiff:Double! = 0.0
+    var save_now:Bool = false
     
     let batteryStopWatch:Stopwatch! = Stopwatch()
     @IBOutlet weak var minLabel: UILabel!
@@ -123,15 +124,23 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     private lazy var library: MTLLibrary = device.makeDefaultLibrary()!
     
     let myMetronome = Metronome()
-
+    var myMetronome2 = false
+    var myMetronome2prevTime = 0.0
+    let myMetronome2Watch:Stopwatch! = Stopwatch()
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
         myMetronome.onTick = { (nextTick) in
-            self.animateTick()
-            
             // Save functions..
-            self.saveFiles()
+            if self.flir_on{
+                self.save_now = true
+            }
+            else{
+                // Save without flir
+                self.saveFiles()
+            }
+            self.animateTick()
         }
         updateBpm()
     }
@@ -141,20 +150,29 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         UIView.animate(withDuration: 0.35) {
             self.tickLabel.alpha = 0.0
         }
+        tickLabel.text = "#\(self.save_cnt)"
     }
 
     @IBAction func startMetronome(_ sender: AnyObject) {
-        if myMetronome.enabled{
-            myMetronome.enabled = false
+//        if myMetronome.enabled{
+//            myMetronome.enabled = false
+//            sender.setTitle("Start Rec.", for: [])
+//        }else{
+//            myMetronome.enabled = true
+//            sender.setTitle("Stop Rec.", for: [])
+//        }
+        if myMetronome2{
+            myMetronome2 = false
             sender.setTitle("Start Rec.", for: [])
         }else{
-            myMetronome.enabled = true
+            myMetronome2 = true
             sender.setTitle("Stop Rec.", for: [])
         }
     }
 
     @IBAction func stopMetronome(_: Any?) {
-        myMetronome.enabled = false
+        //myMetronome.enabled = false
+        myMetronome2 = false
     }
 
     
@@ -162,12 +180,17 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     {
         self.shootingPeriodInt = Int(sender.value)
         myMetronome.bpm = 60 / Float(self.shootingPeriodInt)
-        print(myMetronome.bpm)
         updateBpm()
     }
     
     @IBAction func manualCapture(_: Any?) {
         saveFiles()
+//        if self.flir_on{
+//            self.save_now = true
+//        }
+//        else{
+//            self.saveFiles()
+//        }
         animateTick()
     }
     
@@ -305,44 +328,47 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         self.iPhone_rgb_img = session.currentFrame?.ColorTransformedImage(orientation: orientation, viewPort: depth_ROI)
         self.depth_img = session.currentFrame?.depthMapTransformedImageCIImage(orientation: tiffOrientation)
         
-        // Code for background saving process
-        let bgQueue = OperationQueue()
-        bgQueue.addOperation {
-            // Create folder
-            self.fm.createFolderIfNeeded()
-            // Get Next cnt
-            self.save_cnt = self.fm.getNextCnt(subDir: "depth_tiff")
-            
-            // Save FLIR Image
-            if self.flir_on{
-                self.renderQueue.sync {
-//                        do {
-//                            try self.thermalStreamer?.update()
-//                        } catch {
-//                            NSLog("update error \(error)")
-//                        }
-                        DispatchQueue.main.sync {
-//                            self.thermalStreamer?.withThermalImage { image in
-//                                self.flir_img = image
-//                                let thermal_image = self.thermalStreamer?.getImage()
-//                                self.imageView.image = thermal_image
-//                            }
-                                
-                            if (self.flir_img != nil){
-                                let path = self.fm.getPathForImage(name: "flir_jpg/IMG_\(self.save_cnt)")?.path
-                                do
-                                {
-                                    try self.flir_img.save(as:path!)
-                                    self.processFLIR()
-                                } catch{
-                                    print("Save failed \(error)")
-                                }
-                            }
+        // Create folder
+        self.fm.createFolderIfNeeded()
+        // Get Next cnt
+        self.save_cnt = self.fm.getNextCnt(subDir: "meta_json")
+        
+        // Save FLIR Image
+        if self.flir_on{
+            self.renderQueue.async {
+                    do {
+                        try self.thermalStreamer?.update()
+                    } catch {
+                        NSLog("update error \(error)")
                     }
+                    DispatchQueue.main.async {
+                        self.thermalStreamer?.withThermalImage { image in
+                            self.flir_img = image
+                            let thermal_image = self.thermalStreamer?.getImage()
+                            self.imageView.image = thermal_image
+                        }
+
+                        if (self.flir_img != nil){
+                            let path = self.fm.getPathForImage(name: "flir_jpg/IMG_\(self.save_cnt)")?.path
+                            do
+                            {
+                                try self.flir_img.save(as:path!)
+                                self.processFLIR()
+                            } catch{
+                                print("Save failed \(error)")
+                            }
+                        }
+                        
+                        self.updateFlirBatteryInfo()
                 }
             }
-            
-
+        }
+        
+        // Code for background saving process
+        //let bgQueue = OperationQueue()
+        //bgQueue.addOperation {
+        
+        
             // Save iPhone jpg
             let rgb_path = self.fm.getPathForImageExt(subdir: "rgb_jpg", name: "IMG_\(self.save_cnt)", ext: "jpg")
             // let cameraResolution = Float2(Float(self.session.currentFrame?.camera.imageResolution.width ?? 0), Float(self.session.currentFrame?.camera.imageResolution.height ?? 0))
@@ -366,15 +392,110 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
             // @TODO: Save iPhone Point cloud *.ply file
             self.renderer.savePoints()
             
-
-
+            
+//            do {
+//                try self.thermalStreamer?.update()
+//                self.updateFlirInfo()
+//            } catch {
+//                NSLog("update error \(error)")
+//            }
+//
+//            if (self.flir_img != nil){
+//                let path = self.fm.getPathForImage(name: "flir_jpg/IMG_\(self.save_cnt)")?.path
+//                do
+//                {
+//                    try self.flir_img.save(as:path!)
+//                    self.processFLIR()
+//                } catch{
+//                    print("Save failed \(error)")
+//                }
+//            }
+            
+            
+//            self.updateFlir()
+//            if self.flir_on{
+//                self.renderQueue.sync {
+//
+//                        if (self.flir_img != nil){
+//                            let path = self.fm.getPathForImage(name: "flir_jpg/IMG_\(self.save_cnt)")?.path
+//                            do
+//                            {
+//                                try self.flir_img.save(as:path!)
+//                                self.processFLIR()
+//                            } catch{
+//                                print("Save failed \(error)")
+//                            }
+//                        }
+//                    }
+//            }
+            
+            
             // Save GPS Coordinate, Roll, Pich, Yaw
             self.saveJson()
             
             
-        }
+        //}
+    }
+    
+    func saveFiles2()
+    {
         
+        // Create folder
+        self.fm.createFolderIfNeeded()
+        // Get Next cnt
+        self.save_cnt = self.fm.getNextCnt(subDir: "meta_json")
+        
+        // Save FLIR Image
+        if (self.flir_img != nil){
+            let path = self.fm.getPathForImage(name: "flir_jpg/IMG_\(self.save_cnt)")?.path
+            do
+            {
+                try self.flir_img.save(as:path!)
+                self.processFLIR()
+            } catch{
+                print("Save failed \(error)")
+            }
+        }
+        self.updateFlirBatteryInfo()
 
+        
+        // Code for background saving process
+        //let bgQueue = OperationQueue()
+        //bgQueue.addOperation {
+        
+        // Update imges
+        let depth_ROI = CGRect(x: 0, y: 0, width: 1440, height: 1920)
+        self.iPhone_rgb_img = session.currentFrame?.ColorTransformedImage(orientation: orientation, viewPort: depth_ROI)
+        self.depth_img = session.currentFrame?.depthMapTransformedImageCIImage(orientation: tiffOrientation)
+       
+        // Save iPhone jpg
+        let rgb_path = self.fm.getPathForImageExt(subdir: "rgb_jpg", name: "IMG_\(self.save_cnt)", ext: "jpg")
+        // let cameraResolution = Float2(Float(self.session.currentFrame?.camera.imageResolution.width ?? 0), Float(self.session.currentFrame?.camera.imageResolution.height ?? 0))
+        
+//            let targetSize = CGSize(width: Int(cameraResolution[1]), height: Int(cameraResolution[0]))
+//            self.iPhone_rgb_img = self.iPhone_rgb_img.scalePreservingAspectRatio(
+//                targetSize: targetSize
+//            )
+        
+        self.fm.saveJpg(image: self.iPhone_rgb_img, path: rgb_path!)
+        
+        // Save iPhone Depth
+        let depth_url = self.fm.getPathForImageExt(subdir: "depth_tiff", name: "IMG_\(self.save_cnt)", ext: "tiff")
+        let context: CIContext! = CIContext()
+        do {
+            try context.writeTIFFRepresentation(of: self.depth_img, to: depth_url!, format: context.workingFormat, colorSpace: context.workingColorSpace!, options: [:])
+        } catch {
+            print("Save TIFF failed")
+            print(error)
+        }
+        // @TODO: Save iPhone Point cloud *.ply file
+        self.renderer.savePoints()
+            
+        // Save GPS Coordinate, Roll, Pich, Yaw
+        self.saveJson()
+        
+            
+        //}
     }
     // Metronome
     
@@ -744,95 +865,123 @@ extension PointCloudViewController: FLIRDiscoveryEventDelegate {
     }
 }
 
-extension PointCloudViewController : FLIRStreamDelegate {
-    
-    func onError(_ error: Error) {
-        NSLog("\(#function) \(error)")
-    }
-
-    func onImageReceived() {
-        
-        
-        renderQueue.async {
+extension PointCloudViewController{
+    func updateFlirBatteryInfo(){
+        // Update battery info
+        if let remoteControl = self.camera?.getRemoteControl(){
+            let batt = remoteControl.getBattery()
+            let percent = batt?.getPercentage()
+            var estimatedTime:Double = 0.0
             
-            // Update display while not recording
+            if percent! > 0{
+                self.batteryPercent = Double(percent!)
+                if self.batteryPercent < self.batteryPercenPrev{
+                    self.batteryStopWatch.stop()
+                    self.batteryTimeDiff = self.batteryStopWatch.durationSeconds()
+                    if self.batteryTimeDiff > 0.0 {
+                        let consumRate = ((self.batteryPercenPrev - self.batteryPercent) / self.batteryTimeDiff) * 60.0 // Consume per min
+                        self.batteryConsumeRate = (self.batteryConsumeRate + consumRate) / 2.0
+                    }
+                    self.batteryStopWatch.start()
+                    
+                }
+                self.batteryPercenPrev = self.batteryPercent
+                
+                estimatedTime = Double(self.batteryPercent) / self.batteryConsumeRate
+                self.batteryLabel.text = String(format:"FLIR:%d %% (%.1lf min left)", percent!, estimatedTime)
+            }
+        }
+    }
+    
+    func updateFlirInfo(){
+        self.thermalStreamer?.withThermalImage { image in
+            
+            let thermal_image = self.thermalStreamer?.getImage()
+            //self.thermal_img = thermal_image
+            self.imageView.image = thermal_image
+            self.rgb_img = image.getPhoto()
+            //self.rgbimageView.image = self.rgb_img
+            
+            if let measurements = image.measurements {
+                if measurements.getAllSpots().isEmpty {
+                    do {
+                        try measurements.addSpot(CGPoint(x: CGFloat(image.getWidth()) / 2,
+                                                         y: CGFloat(image.getHeight()) / 2))
+                    } catch {
+                        NSLog("addSpot error \(error)")
+                    }
+                }
+                if let spot = measurements.getAllSpots().first {
+                    self.centerSpotLabel.text = spot.getValue().description()
+                }
+            }
+            
+            if let statistics = image.getStatistics() {
+                self.t_min = Double(statistics.getMin().asCelsius().value)
+                self.minLabel.text = String(format:"%.2f", self.t_min)
+                self.t_max = Double(statistics.getMax().asCelsius().value)
+                self.maxLabel.text = String(format:"%.2f", self.t_max)
+                self.t_average = Double(statistics.getAverage().asCelsius().value)
+                self.averageLabel.text = String(format:"%.2f", self.t_average)
+            }
+            
+            if let remoteControl = self.camera?.getRemoteControl(),
+               let fusionController = remoteControl.getFusionController() {
+                let distance = fusionController.getFusionDistance()
+                self.distanceLabel.text = "\((distance * 1000).rounded() / 1000)"
+                self.distanceSlider.value = Float(distance)
+            }
+            self.updateFlirBatteryInfo()
+            
+            self.flir_img = image
+        }
+    }
+    
+    func updateFlir(){
+        renderQueue.async {
             do {
                 try self.thermalStreamer?.update()
             } catch {
                 NSLog("update error \(error)")
             }
-                
-
+        
             DispatchQueue.main.async {
+                self.updateFlirInfo()
                 
-                self.thermalStreamer?.withThermalImage { image in
-                    
-                    let thermal_image = self.thermalStreamer?.getImage()
-                    //self.thermal_img = thermal_image
-                    self.imageView.image = thermal_image
-                    self.rgb_img = image.getPhoto()
-                    //self.rgbimageView.image = self.rgb_img
-                    
-                    if let measurements = image.measurements {
-                        if measurements.getAllSpots().isEmpty {
-                            do {
-                                try measurements.addSpot(CGPoint(x: CGFloat(image.getWidth()) / 2,
-                                                                 y: CGFloat(image.getHeight()) / 2))
-                            } catch {
-                                NSLog("addSpot error \(error)")
-                            }
-                        }
-                        if let spot = measurements.getAllSpots().first {
-                            self.centerSpotLabel.text = spot.getValue().description()
-                        }
+                if self.myMetronome.enabled{
+                    //self.saveFiles2()
+                    //self.save_now = false
+                }
+                
+                if self.myMetronome2{
+                    self.myMetronome2Watch.stop()
+                    let currTime = self.myMetronome2Watch.durationSeconds()
+                    if currTime > Double(self.shootingPeriodInt)
+                    {
+                        self.myMetronome2Watch.start()
+                        self.saveFiles2()
+                        // Update time
+                        self.actualShootingPeriod.text = String(format: "%.2f sec", currTime)
+                        self.animateTick()
+
                     }
-                    
-                    if let statistics = image.getStatistics() {
-                        self.t_min = Double(statistics.getMin().asCelsius().value)
-                        self.minLabel.text = String(format:"%.2f", self.t_min)
-                        self.t_max = Double(statistics.getMax().asCelsius().value)
-                        self.maxLabel.text = String(format:"%.2f", self.t_max)
-                        self.t_average = Double(statistics.getAverage().asCelsius().value)
-                        self.averageLabel.text = String(format:"%.2f", self.t_average)
-                    }
-                    
-                    if let remoteControl = self.camera?.getRemoteControl(),
-                       let fusionController = remoteControl.getFusionController() {
-                        let distance = fusionController.getFusionDistance()
-                        self.distanceLabel.text = "\((distance * 1000).rounded() / 1000)"
-                        self.distanceSlider.value = Float(distance)
-                    }
-                    
-                    // Update battery info
-                    if let remoteControl = self.camera?.getRemoteControl(){
-                        let batt = remoteControl.getBattery()
-                        let percent = batt?.getPercentage()
-                        var estimatedTime:Double = 0.0
-                        
-                        if percent! > 0{
-                            self.batteryPercent = Double(percent!)
-                            if self.batteryPercent < self.batteryPercenPrev{
-                                self.batteryStopWatch.stop()
-                                self.batteryTimeDiff = self.batteryStopWatch.durationSeconds()
-                                if self.batteryTimeDiff > 0.0 {
-                                    let consumRate = ((self.batteryPercenPrev - self.batteryPercent) / self.batteryTimeDiff) * 60.0 // Consume per min
-                                    self.batteryConsumeRate = (self.batteryConsumeRate + consumRate) / 2.0
-                                }
-                                self.batteryStopWatch.start()
-                                
-                            }
-                            self.batteryPercenPrev = self.batteryPercent
-                            
-                            estimatedTime = Double(self.batteryPercent) / self.batteryConsumeRate
-                            self.batteryLabel.text = String(format:"FLIR:%d %% (%.1lf min left)", percent!, estimatedTime)
-                        }
-                    }
-                    
-                    self.flir_img = image
                 }
             }
         }
-        
+    }
+}
+
+extension PointCloudViewController : FLIRStreamDelegate {
+    
+    func onError(_ error: Error) {
+        NSLog("\(#function) \(error)")
+    }
+    
+    func onImageReceived() {
+        // Update display while not recording
+        //if self.myMetronome.enabled == false{
+        //}
+        updateFlir()
     }
 }
 

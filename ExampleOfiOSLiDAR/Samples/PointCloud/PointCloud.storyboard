@@ -200,6 +200,12 @@
                                 <nil key="textColor"/>
                                 <nil key="highlightedColor"/>
                             </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Period" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="SIc-Cl-YRs" userLabel="Actual Period">
+                                <rect key="frame" x="341" y="729" width="44" height="18"/>
+                                <fontDescription key="fontDescription" type="system" pointSize="15"/>
+                                <color key="textColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <nil key="highlightedColor"/>
+                            </label>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="bEC-hm-9tD"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
@@ -223,7 +229,9 @@
                             <constraint firstAttribute="trailing" secondItem="HJH-pd-vP5" secondAttribute="trailing" constant="20" id="C9Y-GH-Eyg"/>
                             <constraint firstItem="8ev-nI-bGk" firstAttribute="centerX" secondItem="jaN-Je-vcn" secondAttribute="centerX" id="GKA-0L-QOb"/>
                             <constraint firstItem="j4P-g9-wQA" firstAttribute="leading" secondItem="IDh-cY-8VH" secondAttribute="trailing" constant="5" id="HAQ-pf-6ep"/>
+                            <constraint firstItem="bEC-hm-9tD" firstAttribute="trailing" secondItem="SIc-Cl-YRs" secondAttribute="trailing" constant="5" id="I39-d1-Xc2"/>
                             <constraint firstItem="tWX-Yg-1yH" firstAttribute="leading" secondItem="8ev-nI-bGk" secondAttribute="trailing" constant="20" id="IT5-6U-eG1"/>
+                            <constraint firstItem="SIc-Cl-YRs" firstAttribute="top" secondItem="vot-O5-61W" secondAttribute="bottom" id="Jb2-2w-Bgx"/>
                             <constraint firstItem="bEC-hm-9tD" firstAttribute="trailing" secondItem="KfL-b9-VnT" secondAttribute="trailing" constant="5" id="LWe-ZO-nL2"/>
                             <constraint firstItem="bEC-hm-9tD" firstAttribute="bottom" secondItem="8ev-nI-bGk" secondAttribute="bottom" constant="5" id="M3T-Ue-ow5"/>
                             <constraint firstItem="j4P-g9-wQA" firstAttribute="centerY" secondItem="pX0-vd-jhv" secondAttribute="centerY" id="MiN-Em-nld"/>
@@ -274,6 +282,7 @@
                     <connections>
                         <outlet property="LatLabel" destination="QPl-x0-wkS" id="Zo7-u9-xHW"/>
                         <outlet property="LonLabel" destination="3TB-1c-RER" id="AWV-nJ-pdt"/>
+                        <outlet property="actualShootingPeriod" destination="SIc-Cl-YRs" id="QLi-ux-9el"/>
                         <outlet property="altitudeLabel" destination="Igl-0R-2aO" id="u5H-GU-but"/>
                         <outlet property="averageLabel" destination="dOo-Bj-6ep" id="nXs-Y2-kEE"/>
                         <outlet property="batteryLabel" destination="xlK-SQ-HIy" id="33G-Dq-URM"/>
@@ -291,7 +300,7 @@
                         <outlet property="rollLabel" destination="TlU-kA-ezT" id="A1S-M9-wYV"/>
                         <outlet property="shootingPeriodLabel" destination="vot-O5-61W" id="biR-iK-5rY"/>
                         <outlet property="shootingPeriodSlider" destination="sO5-E3-tqV" id="6Zh-LY-Kp5"/>
-                        <outlet property="tickLabel" destination="j4P-g9-wQA" id="TwC-Hk-a8U"/>
+                        <outlet property="tickLabel" destination="j4P-g9-wQA" id="CVi-Za-nO6"/>
                         <outlet property="view" destination="jaN-Je-vcn" id="10F-cc-7PI"/>
                         <outlet property="yawLabel" destination="uum-gI-K6w" id="8gD-t4-Mre"/>
                     </connections>
