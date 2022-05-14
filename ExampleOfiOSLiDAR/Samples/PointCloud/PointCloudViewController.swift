@@ -117,6 +117,11 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     // Metronome - Timelapse
     @IBOutlet weak var bpmLabel: UILabel!
     @IBOutlet weak var tickLabel: UILabel!
+    var timerOn:Bool = false
+    var saveNow:Bool = false
+    var saveNowFlir:Bool = false
+    var saveTimer:Stopwatch = Stopwatch()
+    var saveImgQueue:OperationQueue = OperationQueue()
     
     // Point cloud
     var isSavingFile = false
@@ -144,17 +149,32 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     }
 
     @IBAction func startMetronome(_ sender: AnyObject) {
-        if myMetronome.enabled{
-            myMetronome.enabled = false
+//        if myMetronome.enabled{
+//            myMetronome.enabled = false
+//            sender.setTitle("Start Rec.", for: [])
+//        }else{
+//            myMetronome.enabled = true
+//            sender.setTitle("Stop Rec.", for: [])
+//        }
+        
+        if self.timerOn{
+            self.timerOn = false
             sender.setTitle("Start Rec.", for: [])
         }else{
-            myMetronome.enabled = true
+            self.timerOn = true
             sender.setTitle("Stop Rec.", for: [])
         }
+        
     }
 
     @IBAction func stopMetronome(_: Any?) {
-        myMetronome.enabled = false
+        //myMetronome.enabled = false
+        
+        // Stop new task
+        self.timerOn = false
+        
+        // Wait previous task
+        self.saveImgQueue.waitUntilAllOperationsAreFinished()
     }
 
     
@@ -167,7 +187,8 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     }
     
     @IBAction func manualCapture(_: Any?) {
-        saveFiles()
+        //saveFiles()
+        self.saveNow = true
         animateTick()
     }
     
@@ -299,70 +320,26 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     
     func saveFiles()
     {
-        // Update imges
-        let depth_ROI = CGRect(x: 0, y: 0, width: 1440, height: 1920)
-        self.iPhone_rgb_img = session.currentFrame?.ColorTransformedImage(orientation: orientation, viewPort: depth_ROI)
-        self.depth_img = session.currentFrame?.depthMapTransformedImageCIImage(orientation: tiffOrientation)
+        // Save iPhone jpg
+        let rgb_path = self.fm.getPathForImageExt(subdir: "rgb_jpg", name: "IMG_\(self.save_cnt)", ext: "jpg")
         
-      
+        self.fm.saveJpg(image: self.iPhone_rgb_img, path: rgb_path!)
         
-        // Code for background saving process
-        //let bgQueue = OperationQueue()
-        //bgQueue.addOperation {
-            // Create folder
-            self.fm.createFolderIfNeeded()
-            // Get Next cnt
-            self.save_cnt = self.fm.getNextCnt(subDir: "meta_json")
-            
-            // Save FLIR Image
-            if self.flir_on{
-                self.renderQueue.async {
-                    DispatchQueue.main.sync {
-                        if (self.flir_img != nil){
-                            let path = self.fm.getPathForImage(name: "flir_jpg/IMG_\(self.save_cnt)")?.path
-                            do
-                            {
-                                try self.flir_img.save(as:path!)
-                                self.processFLIR()
-                            } catch{
-                                print("Save failed \(error)")
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Save iPhone jpg
-            let rgb_path = self.fm.getPathForImageExt(subdir: "rgb_jpg", name: "IMG_\(self.save_cnt)", ext: "jpg")
-            // let cameraResolution = Float2(Float(self.session.currentFrame?.camera.imageResolution.width ?? 0), Float(self.session.currentFrame?.camera.imageResolution.height ?? 0))
-            
-            //            let targetSize = CGSize(width: Int(cameraResolution[1]), height: Int(cameraResolution[0]))
-            //            self.iPhone_rgb_img = self.iPhone_rgb_img.scalePreservingAspectRatio(
-            //                targetSize: targetSize
-            //            )
-            
-            self.fm.saveJpg(image: self.iPhone_rgb_img, path: rgb_path!)
-            
-            // Save iPhone Depth
-            let depth_url = self.fm.getPathForImageExt(subdir: "depth_tiff", name: "IMG_\(self.save_cnt)", ext: "tiff")
-            let context: CIContext! = CIContext()
-            do {
-                try context.writeTIFFRepresentation(of: self.depth_img, to: depth_url!, format: context.workingFormat, colorSpace: context.workingColorSpace!, options: [:])
-            } catch {
-                print("Save TIFF failed")
-                print(error)
-            }
-            // @TODO: Save iPhone Point cloud *.ply file
-            self.renderer.savePoints()
-            // Save GPS Coordinate, Roll, Pich, Yaw
-            self.saveJson()
-        //}
-        
-        
-
-        
-
+        // Save iPhone Depth
+        let depth_url = self.fm.getPathForImageExt(subdir: "depth_tiff", name: "IMG_\(self.save_cnt)", ext: "tiff")
+        let context: CIContext! = CIContext()
+        do {
+            try context.writeTIFFRepresentation(of: self.depth_img, to: depth_url!, format: context.workingFormat, colorSpace: context.workingColorSpace!, options: [:])
+        } catch {
+            print("Save TIFF failed")
+            print(error)
+        }
+        // @TODO: Save iPhone Point cloud *.ply file
+        self.renderer.savePoints()
+        // Save GPS Coordinate, Roll, Pich, Yaw
+        self.saveJson()
     }
+    
     // Metronome
     
     
@@ -648,9 +625,51 @@ extension PointCloudViewController: MTKViewDelegate {
         
         // RGB, Depth
         updateImgs()
-        //if myMetronome.enabled==false{
-        //}
         
+        
+        if self.timerOn{
+            // Check queue empty and flir save ends
+            if self.saveImgQueue.operationCount==0 && self.saveNowFlir == false{
+                // Check time
+                self.saveTimer.stop()
+                if self.saveTimer.durationSeconds() > Double(self.shootingPeriodInt){
+                    self.saveNow = true
+                    // tick animation
+                    self.animateTick()
+                    self.shootingPeriodLabel.text = String(format: "%.2f sec", self.saveTimer.durationSeconds())
+                    self.saveTimer.start()
+                }
+            }
+            else{
+                return
+            }
+        }
+        else{
+            self.saveTimer.start()
+        }
+        
+        // Work for manual & timer capture
+        if self.saveNow{
+            // Create folder
+            self.fm.createFolderIfNeeded()
+            // Update frame count
+            self.save_cnt = self.fm.getNextCnt(subDir: "meta_json")
+            
+            // Send flag to FLIR
+            if self.flir_on{
+                // Save flag for flir
+                self.saveNowFlir = true
+            }
+            
+            // Add operation
+            self.saveImgQueue.addOperation {
+                // Save file
+                self.saveFiles()
+            }
+            
+            // Turn off saveNow flag after addOperation
+            self.saveNow = false
+        }
    
         
     }
@@ -816,6 +835,19 @@ extension PointCloudViewController : FLIRStreamDelegate {
                     }
                     
                     self.flir_img = image
+                    
+                    if self.saveNowFlir{
+                        let path = self.fm.getPathForImage(name: "flir_jpg/IMG_\(self.save_cnt)")?.path
+                        do
+                        {
+                            try self.flir_img.save(as:path!)
+                            self.processFLIR()
+                        } catch{
+                            print("Save failed \(error)")
+                        }
+                        self.saveNowFlir = false
+                    }
+                    
                 }
             }
         }

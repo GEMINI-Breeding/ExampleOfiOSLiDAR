@@ -142,7 +142,7 @@ extension ARFrame {
         } catch{
             pixelBufferCopy = pixelBuffer
         }
-        pixelBufferCopy.rescale(minPixel: 0.0, maxPixel: 10.0)
+        pixelBufferCopy.rescale(minPixel: 0.0, maxPixel: 20.0)
         let ciImage = CIImage(cvPixelBuffer: pixelBufferCopy)
         return UIImage(ciImage: screenTransformed(ciImage: ciImage, orientation: orientation, viewPort: viewPort))
     }
