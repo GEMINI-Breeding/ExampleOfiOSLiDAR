@@ -128,10 +128,9 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         super.viewWillAppear(animated)
 
         myMetronome.onTick = { (nextTick) in
-            self.animateTick()
-            
             // Save functions..
             self.saveFiles()
+            self.animateTick()
         }
         updateBpm()
     }
@@ -140,6 +139,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         tickLabel.alpha = 1.0
         UIView.animate(withDuration: 0.35) {
             self.tickLabel.alpha = 0.0
+            self.tickLabel.text = String(format: "# %d", self.save_cnt)
         }
     }
 
@@ -202,7 +202,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
                                     (iCamIntrinsics![2][2])
                                     )
         //@TODO: Add more metadata
-        let personArray =  [["info": ["timestamp": "\(self.timestamp)", "FLIRBatteryPercent": "\(self.batteryPercent)",
+        let personArray =  [["info": ["timestamp": "\(self.timestamp)", "FLIRBatteryPercent": "\(self.batteryPercent!)",
                                     "iCamIntrinsics": iCamIntrinsicsString]],
                             ["gps": ["latitude": "\(self.locValue.latitude)", "longitude": "\(self.locValue.longitude)", "altitude": "\(self.altitude)"]],
                             ["attitude": ["roll": "\(self.roll)", "pitch": "\(self.pitch)", "yaw": "\(self.yaw)"]],
@@ -300,57 +300,46 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     func saveFiles()
     {
         // Update imges
-        // updateImgs()
         let depth_ROI = CGRect(x: 0, y: 0, width: 1440, height: 1920)
         self.iPhone_rgb_img = session.currentFrame?.ColorTransformedImage(orientation: orientation, viewPort: depth_ROI)
         self.depth_img = session.currentFrame?.depthMapTransformedImageCIImage(orientation: tiffOrientation)
         
+      
+        
         // Code for background saving process
-        let bgQueue = OperationQueue()
-        bgQueue.addOperation {
+        //let bgQueue = OperationQueue()
+        //bgQueue.addOperation {
             // Create folder
             self.fm.createFolderIfNeeded()
             // Get Next cnt
-            self.save_cnt = self.fm.getNextCnt(subDir: "depth_tiff")
+            self.save_cnt = self.fm.getNextCnt(subDir: "meta_json")
             
             // Save FLIR Image
             if self.flir_on{
-                self.renderQueue.sync {
-//                        do {
-//                            try self.thermalStreamer?.update()
-//                        } catch {
-//                            NSLog("update error \(error)")
-//                        }
-                        DispatchQueue.main.sync {
-//                            self.thermalStreamer?.withThermalImage { image in
-//                                self.flir_img = image
-//                                let thermal_image = self.thermalStreamer?.getImage()
-//                                self.imageView.image = thermal_image
-//                            }
-                                
-                            if (self.flir_img != nil){
-                                let path = self.fm.getPathForImage(name: "flir_jpg/IMG_\(self.save_cnt)")?.path
-                                do
-                                {
-                                    try self.flir_img.save(as:path!)
-                                    self.processFLIR()
-                                } catch{
-                                    print("Save failed \(error)")
-                                }
+                self.renderQueue.async {
+                    DispatchQueue.main.sync {
+                        if (self.flir_img != nil){
+                            let path = self.fm.getPathForImage(name: "flir_jpg/IMG_\(self.save_cnt)")?.path
+                            do
+                            {
+                                try self.flir_img.save(as:path!)
+                                self.processFLIR()
+                            } catch{
+                                print("Save failed \(error)")
                             }
+                        }
                     }
                 }
             }
             
-
             // Save iPhone jpg
             let rgb_path = self.fm.getPathForImageExt(subdir: "rgb_jpg", name: "IMG_\(self.save_cnt)", ext: "jpg")
             // let cameraResolution = Float2(Float(self.session.currentFrame?.camera.imageResolution.width ?? 0), Float(self.session.currentFrame?.camera.imageResolution.height ?? 0))
             
-//            let targetSize = CGSize(width: Int(cameraResolution[1]), height: Int(cameraResolution[0]))
-//            self.iPhone_rgb_img = self.iPhone_rgb_img.scalePreservingAspectRatio(
-//                targetSize: targetSize
-//            )
+            //            let targetSize = CGSize(width: Int(cameraResolution[1]), height: Int(cameraResolution[0]))
+            //            self.iPhone_rgb_img = self.iPhone_rgb_img.scalePreservingAspectRatio(
+            //                targetSize: targetSize
+            //            )
             
             self.fm.saveJpg(image: self.iPhone_rgb_img, path: rgb_path!)
             
@@ -365,14 +354,12 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
             }
             // @TODO: Save iPhone Point cloud *.ply file
             self.renderer.savePoints()
-            
-
-
             // Save GPS Coordinate, Roll, Pich, Yaw
             self.saveJson()
-            
-            
-        }
+        //}
+        
+        
+
         
 
     }
