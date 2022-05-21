@@ -61,7 +61,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     
     var flir_img: FLIRThermalImage!
     
-    var save_cnt: Int = 0
+    var saveCnt: Int = 0
     
     var shootingPeriodInt: Int = 1
     
@@ -144,7 +144,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         tickLabel.alpha = 1.0
         UIView.animate(withDuration: 0.35) {
             self.tickLabel.alpha = 0.0
-            self.tickLabel.text = String(format: "# %d", self.save_cnt)
+            self.tickLabel.text = String(format: "# %d", self.saveCnt)
         }
     }
 
@@ -231,7 +231,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
                             ]
         
         // Get the url of Persons.json in document directory
-        let fileUrl = self.fm.getPathForImageExt(subdir: "meta_json", name: "IMG_\(self.save_cnt)", ext: "json")
+        let fileUrl = self.fm.getPathForImageExt(subdir: "meta_json", name: "\(self.fm.genTodayName())_IMG_\(self.saveCnt)", ext: "json")
         
         // Create a write-only stream
         guard let stream = OutputStream(toFileAtPath: fileUrl!.path, append: false) else { return }
@@ -270,7 +270,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         
         //let thermalImage = FLIRThermalImageFile()
         
-        let path = self.fm.getPathForImage(name: "flir_jpg/IMG_\(self.save_cnt)")?.path
+        let path = self.fm.getPathForImage(name: "flir_jpg/\(self.fm.genTodayName())_IMG_\(self.saveCnt)")?.path
         
         if FileManager.default.fileExists(atPath: path!)
         {
@@ -319,12 +319,12 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     func saveFiles()
     {
         // Save iPhone jpg
-        let rgb_path = self.fm.getPathForImageExt(subdir: "rgb_jpg", name: "IMG_\(self.save_cnt)", ext: "jpg")
+        let rgb_path = self.fm.getPathForImageExt(subdir: "rgb_jpg", name: "\(self.fm.genTodayName())_IMG_\(self.saveCnt)", ext: "jpg")
         
         self.fm.saveJpg(image: self.iPhone_rgb_img, path: rgb_path!)
         
         // Save iPhone Depth
-        let depth_url = self.fm.getPathForImageExt(subdir: "depth_tiff", name: "IMG_\(self.save_cnt)", ext: "tiff")
+        let depth_url = self.fm.getPathForImageExt(subdir: "depth_tiff", name: "\(self.fm.genTodayName())_IMG_\(self.saveCnt)", ext: "tiff")
         let context: CIContext! = CIContext()
         do {
             try context.writeTIFFRepresentation(of: self.depth_img, to: depth_url!, format: context.workingFormat, colorSpace: context.workingColorSpace!, options: [:])
@@ -727,6 +727,7 @@ extension PointCloudViewController: FLIRDiscoveryEventDelegate {
                         self.fusion?.setFusionMode(IR_MODE)
                     }
                     
+                    self.flir_on = true
                 } catch {
                     NSLog("Camera connect error \(error)")
                 }
@@ -840,7 +841,7 @@ extension PointCloudViewController : FLIRStreamDelegate {
                     
                     
                     if self.saveNowFlir{
-                        let path = self.fm.getPathForImage(name: "flir_jpg/IMG_\(self.save_cnt)")?.path
+                        let path = self.fm.getPathForImage(name: "flir_jpg/\(self.fm.genTodayName())_IMG_\(self.saveCnt)")?.path
                         do
                         {
                             try self.flir_img.save(as:path!)

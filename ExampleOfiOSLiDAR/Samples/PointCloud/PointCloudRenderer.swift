@@ -27,7 +27,7 @@ class PointCloudRenderer {
 
     private var relaxedStencilState: MTLDepthStencilState!
     private lazy var unprojectPipelineState = makeUnprojectionPipelineState()!
-    private let confidenceThreshold = 1
+    private let confidenceThreshold = 1  // Change here to make difference in point cloud
 
     private lazy var semaphore = DispatchSemaphore(value: maxBuffers)
     //private let orientation = UIInterfaceOrientation.landscapeRight
