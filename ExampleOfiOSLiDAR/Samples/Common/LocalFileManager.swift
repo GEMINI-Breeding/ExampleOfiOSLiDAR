@@ -30,6 +30,13 @@ class LocalFileManager{
         return formatter.string(from: date)
     }
     
+    func genTodayName() -> String {
+        let date = Date()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyMMdd"
+        return formatter.string(from: date)
+    }
+    
     func getNextCnt(subDir: String) -> Int    {
         // Generate today folder
         self.folder_name = genTodayFolder()
@@ -57,7 +64,7 @@ class LocalFileManager{
             let c1 = fileName.pathComponents.count - 1
             // the filename of each file
             let v1 = fileName.pathComponents[c1].components(separatedBy: [".","_"])
-            let idx = Int(v1[1])!
+            let idx = Int(v1[2])!
             if max_val < idx{
                 max_val = idx
             }

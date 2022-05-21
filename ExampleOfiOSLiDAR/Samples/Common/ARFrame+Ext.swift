@@ -133,6 +133,7 @@ extension ARFrame {
     }
     
     func depthMapTransformedNormalizedImage(orientation: UIInterfaceOrientation, viewPort: CGRect) -> UIImage? {
+        //guard let pixelBuffer = self.smoothedSceneDepth?.depthMap else { return nil }
         guard let pixelBuffer = self.sceneDepth?.depthMap else { return nil }
         let pixelBufferCopy: CVPixelBuffer!
         do
@@ -142,12 +143,13 @@ extension ARFrame {
         } catch{
             pixelBufferCopy = pixelBuffer
         }
-        pixelBufferCopy.rescale(minPixel: 0.0, maxPixel: 20.0)
+        pixelBufferCopy.normalize()
         let ciImage = CIImage(cvPixelBuffer: pixelBufferCopy)
         return UIImage(ciImage: screenTransformed(ciImage: ciImage, orientation: orientation, viewPort: viewPort))
     }
     
     func depthMapTransformedImageCIImage(orientation: CGImagePropertyOrientation) -> CIImage? {
+        //guard let pixelBuffer = self.smoothedSceneDepth?.depthMap else { return nil }
         guard let pixelBuffer = self.sceneDepth?.depthMap else { return nil }
         let pixelBufferCopy: CVPixelBuffer!
         do
@@ -172,7 +174,7 @@ extension ARFrame {
         }
         
         //pixelBufferCopy.normalize()
-        pixelBufferCopy.rescale(minPixel: 1.0, maxPixel: 10.0)
+        pixelBufferCopy.rescale(minPixel: 0, maxPixel: 10.0)
 
         let ciImage = CIImage(cvPixelBuffer: pixelBufferCopy)
         return UIImage(ciImage: screenTransformed(ciImage: ciImage, orientation: orientation, viewPort: viewPort))

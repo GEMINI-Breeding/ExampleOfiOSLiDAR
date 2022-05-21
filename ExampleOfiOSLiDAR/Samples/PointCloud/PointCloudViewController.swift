@@ -20,7 +20,7 @@ import RealityKit
 // Roll pitch yaw
 import CoreMotion
 
-class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, CLLocationManagerDelegate {
+class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, CLLocationManagerDelegate, ARDataReceiver {
 
     
     @IBOutlet weak var mtkView: MTKView!
@@ -28,6 +28,73 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     // ARKit
     private var session: ARSession!
     var alphaTexture: MTLTexture?
+    let arReceiver = ARReceiver()
+    var lastArData: ARData?
+    
+    // Start or resume the stream from ARKit.
+    func start() {
+        arReceiver.start()
+    }
+    
+    // Pause the stream from ARKit.
+    func pause() {
+        arReceiver.pause()
+    }
+    
+    // Save a reference to the current AR data and process it.
+    func onNewARData(arData: ARData) {
+        lastArData = arData
+        processLastArData()
+    }
+    
+    func processLastArData(){
+        if self.timerOn{
+            // Check queue empty and flir save ends
+            if self.saveImgQueue.operationCount==0 && self.saveNowFlir == false{
+                // Check time
+                self.saveTimer.stop()
+                if self.saveTimer.durationSeconds() > Double(self.shootingPeriodInt){
+                    self.saveNow = true
+                    self.updateImgs() // update image before flir. to make delay
+                    // tick animation
+                    self.animateTick()
+                    self.shootingPeriodLabel.text = String(format: "%.2f sec", self.saveTimer.durationSeconds())
+                    self.saveTimer.start()
+                }
+            }
+            else{
+                return
+            }
+        }
+        else{
+            self.saveTimer.start()
+            self.updateImgs()
+        }
+        
+        // Work for manual & timer capture
+        if self.saveNow{
+            // Create folder
+            self.fm.createFolderIfNeeded()
+            // Update frame count
+            self.saveCnt = self.fm.getNextCnt(subDir: "meta_json")
+            
+            // Send flag to FLIR
+            if self.flir_on{
+                // Save flag for flir
+                self.saveNowFlir = true
+            }
+            
+            // Add operation
+            self.saveImgQueue.addOperation {
+                // Save file
+                self.saveFiles()
+            }
+            
+            // Turn off saveNow flag after addOperation
+            self.saveNow = false
+        }
+
+    }
     
     // Metal
     private let device = MTLCreateSystemDefaultDevice()!
@@ -50,6 +117,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     @IBOutlet weak var distanceSlider: UISlider!
     @IBOutlet weak var imageView: UIImageView!
     @IBOutlet weak var rgbimageView: UIImageView!
+    @IBOutlet weak var confiimageView: UIImageView!
     
     @IBOutlet weak var shootingPeriodLabel: UILabel!
     @IBOutlet weak var shootingPeriodSlider: UISlider!
@@ -210,7 +278,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         //print(self.altitude)
 
         // let cameraResolution = Float2(Float(self.session.currentFrame?.camera.imageResolution.width ?? 0), Float(self.session.currentFrame?.camera.imageResolution.height ?? 0))
-        let iCamIntrinsics = self.session.currentFrame?.camera.intrinsics.transpose // Change columns to rows
+        let iCamIntrinsics = lastArData?.cameraIntrinsics // Change columns to rows
         let iCamIntrinsicsString = String(format: "[[%f,%f,%f],[%f,%f,%f],[%f,%f,%f]]",
                                     (iCamIntrinsics![0][0]),
                                     (iCamIntrinsics![0][1]),
@@ -250,21 +318,27 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         }
     }
     
+
+    
     func updateImgs()
     {
         // iPhone RGB & Depth
         let depth_ROI = CGRect(x: 0, y: 0, width: 1440, height: 1920)
-        //self.iPhone_rgb_img = session.currentFrame?.ColorTransformedImage(orientation: tiffOrientation)
-        self.iPhone_rgb_img = session.currentFrame?.ColorTransformedImage(orientation: orientation, viewPort: depth_ROI)
+        //self.iPhone_rgb_img = session.currentFrame?.ColorTransformedImage(orientation: orientation, viewPort: depth_ROI)
+        self.iPhone_rgb_img = pixelBuffertoUIImage(pixelBuffer: (self.lastArData?.colorImage)!,orientation: tiffOrientation, rescale: false)
         self.iPhone_rgb_imgView.image = self.iPhone_rgb_img
         
-        //self.depth_img = session.currentFrame?.depthMapTransformedImage(orientation: orientation, viewPort: depth_ROI)
-        //self.depth_img = session.currentFrame?.depthMapTransformedNormalizedImage(orientation: orientation, viewPort: depth_ROI)
-        //guard let pixelBuffer = session.currentFrame?.sceneDepth?.depthMap else { return }
-        //self.depth_img = CIImage(cvPixelBuffer: pixelBuffer).oriented(tiffOrientation)
-        self.depth_img = session.currentFrame?.depthMapTransformedImageCIImage(orientation: tiffOrientation)
-        self.depthImageView.image = session.currentFrame?.depthMapTransformedNormalizedImage(orientation: orientation, viewPort: depth_ROI)
+
+        //self.depth_img = session.currentFrame?.depthMapTransformedImageCIImage(orientation: tiffOrientation)
+        self.depth_img = pixelBuffertoCIImage(pixelBuffer: (self.lastArData?.depthImage)!,orientation: tiffOrientation, rescale: false)
+        //self.depthImageView.image = session.currentFrame?.depthMapTransformedNormalizedImage(orientation: orientation, viewPort: depth_ROI)
+        self.depthImageView.image = pixelBuffertoUIImage(pixelBuffer: (self.lastArData?.depthImage)!,orientation: tiffOrientation, rescale: true)
+        
+        let confidenceMap = confidenceMapToCIImage(pixelBuffer: (self.lastArData?.confidenceImage)!)
+        self.confiimageView.image = UIImage(ciImage: (confidenceMap?.oriented(tiffOrientation))!)
+    
     }
+    
     
     func processFLIR(){
         
@@ -333,7 +407,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
             print(error)
         }
         // @TODO: Save iPhone Point cloud *.ply file
-        self.renderer.savePoints()
+        // self.renderer.savePoints()
         // Save GPS Coordinate, Roll, Pich, Yaw
         self.saveJson()
     }
@@ -342,7 +416,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     
     
     private var texture: MTLTexture!
-    lazy private var renderer = PointCloudRenderer(device: device,session: session, mtkView: mtkView)
+    lazy private var renderer = PointCloudRenderer(device: device,session: arReceiver.arSession, mtkView: mtkView)
     
     var orientation: UIInterfaceOrientation {
         guard let orientation = UIApplication.shared.windows.first?.windowScene?.interfaceOrientation else {
@@ -380,19 +454,22 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
             configuration.environmentTexturing = .automatic
             if type(of: configuration).supportsFrameSemantics(.sceneDepth) {
                configuration.frameSemantics = .sceneDepth
+                //configuration.frameSemantics =  [.sceneDepth, .smoothedSceneDepth]
+               
             }
+
 
             return configuration
         }
         
-        func runARSession() {
-            let configuration = buildConfigure()
-            session.run(configuration)
-        }
-        func initARSession() {
-            session = ARSession()
-            runARSession()
-        }
+//        func runARSession() {
+//            let configuration = buildConfigure()
+//            session.run(configuration)
+//        }
+//        func initARSession() {
+//            //session = ARSession()
+//            runARSession()
+//        }
         func createTexture() {
             let width = mtkView.currentDrawable!.texture.width
             let height = mtkView.currentDrawable!.texture.height
@@ -404,10 +481,15 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         }
         
         super.viewDidLoad()
-        initARSession()
+        //initARSession()
         initMatteGenerator()
         initMetal()
         createTexture()
+        
+        arReceiver.start()
+        // Set the delegate for ARKit callbacks.
+        arReceiver.delegate = self
+        session = arReceiver.arSession
         
         // FLIR
         discovery = FLIRDiscovery()
@@ -463,64 +545,63 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         camera.delegate = self
     }
     
-    @IBAction func panGesture(_ sender: UIPanGestureRecognizer) {
-        func buildXRotateMatrix() -> matrix_float4x4 {
-            
-            let rad = -(maxRad * Float(point.y) / cameraResolution.y).truncatingRemainder(dividingBy: Float.pi)
-            //print("buildXRotateMatrix \(rad)")
-            return matrix_float4x4(
-                    simd_float4(1, 0,  0, 0),
-                    simd_float4(0, cos(rad),  sin(rad), 0),
-                    simd_float4(0, -sin(rad), cos(rad), 0),
-                simd_float4(0, 0, 0, 1))
-        }
-        func buildYRotateMatrix() -> matrix_float4x4 {
-            let rad = (maxRad * Float(point.x) / cameraResolution.x).truncatingRemainder(dividingBy: Float.pi)
-            //print("buildYRotateMatrix \(rad)")
-            return matrix_float4x4(
-                    simd_float4(cos(rad), 0,  -sin(rad), 0 ),
-                    simd_float4(0, 1,  0, 0),
-                    simd_float4(sin(rad), 0,  cos(rad), 0),
-                simd_float4(0, 0, 0, 1))
-        }
-        let maxRad = Float.pi * 0.1
-        let cameraResolution = Float2(Float(session.currentFrame?.camera.imageResolution.width ?? 0), Float(session.currentFrame?.camera.imageResolution.height ?? 0))
-        let point = sender.translation(in: view)
-
-        let rotateX = buildXRotateMatrix()
-        let rotateY = buildYRotateMatrix()
-
-        renderer.modelTransform = simd_mul(simd_mul(renderer.modelTransform, rotateX),rotateY)
-    }
-    
-    func rotatePoints(x: Float, y: Float) {
-        func buildXRotateMatrix() -> matrix_float4x4 {
-            let rad = x
-            return matrix_float4x4(
-                    simd_float4(1, 0,  0, 0),
-                    simd_float4(0, cos(rad),  sin(rad), 0),
-                    simd_float4(0, -sin(rad), cos(rad), 0),
-                simd_float4(0, 0, 0, 1))
-        }
-        func buildYRotateMatrix() -> matrix_float4x4 {
-            let rad = y
-            return matrix_float4x4(
-                    simd_float4(cos(rad), 0,  -sin(rad), 0 ),
-                    simd_float4(0, 1,  0, 0),
-                    simd_float4(sin(rad), 0,  cos(rad), 0),
-                simd_float4(0, 0, 0, 1))
-        }
-
-        let rotateX = buildXRotateMatrix()
-        let rotateY = buildYRotateMatrix()
-
-        renderer.modelTransform = simd_mul(simd_mul(renderer.modelTransform, rotateX),rotateY)
-    }
+//    @IBAction func panGesture(_ sender: UIPanGestureRecognizer) {
+//        func buildXRotateMatrix() -> matrix_float4x4 {
+//
+//            let rad = -(maxRad * Float(point.y) / cameraResolution.y).truncatingRemainder(dividingBy: Float.pi)
+//            //print("buildXRotateMatrix \(rad)")
+//            return matrix_float4x4(
+//                    simd_float4(1, 0,  0, 0),
+//                    simd_float4(0, cos(rad),  sin(rad), 0),
+//                    simd_float4(0, -sin(rad), cos(rad), 0),
+//                simd_float4(0, 0, 0, 1))
+//        }
+//        func buildYRotateMatrix() -> matrix_float4x4 {
+//            let rad = (maxRad * Float(point.x) / cameraResolution.x).truncatingRemainder(dividingBy: Float.pi)
+//            //print("buildYRotateMatrix \(rad)")
+//            return matrix_float4x4(
+//                    simd_float4(cos(rad), 0,  -sin(rad), 0 ),
+//                    simd_float4(0, 1,  0, 0),
+//                    simd_float4(sin(rad), 0,  cos(rad), 0),
+//                simd_float4(0, 0, 0, 1))
+//        }
+//        let maxRad = Float.pi * 0.1
+//        let cameraResolution = Float2(Float(session.currentFrame?.camera.imageResolution.width ?? 0), Float(session.currentFrame?.camera.imageResolution.height ?? 0))
+//        let point = sender.translation(in: view)
+//
+//        let rotateX = buildXRotateMatrix()
+//        let rotateY = buildYRotateMatrix()
+//
+//        renderer.modelTransform = simd_mul(simd_mul(renderer.modelTransform, rotateX),rotateY)
+//    }
+//
+//    func rotatePoints(x: Float, y: Float) {
+//        func buildXRotateMatrix() -> matrix_float4x4 {
+//            let rad = x
+//            return matrix_float4x4(
+//                    simd_float4(1, 0,  0, 0),
+//                    simd_float4(0, cos(rad),  sin(rad), 0),
+//                    simd_float4(0, -sin(rad), cos(rad), 0),
+//                simd_float4(0, 0, 0, 1))
+//        }
+//        func buildYRotateMatrix() -> matrix_float4x4 {
+//            let rad = y
+//            return matrix_float4x4(
+//                    simd_float4(cos(rad), 0,  -sin(rad), 0 ),
+//                    simd_float4(0, 1,  0, 0),
+//                    simd_float4(sin(rad), 0,  cos(rad), 0),
+//                simd_float4(0, 0, 0, 1))
+//        }
+//
+//        let rotateX = buildXRotateMatrix()
+//        let rotateY = buildYRotateMatrix()
+//
+//        renderer.modelTransform = simd_mul(simd_mul(renderer.modelTransform, rotateX),rotateY)
+//    }
     
     
     // FLIR
     @IBAction func connectDeviceClicked(_ sender: Any) {
-        self.flir_on = true
         self.batteryStopWatch.start()
         discovery?.start(.lightning)
     }
@@ -603,32 +684,8 @@ extension PointCloudViewController: MTKViewDelegate {
         }
         
 
-
-        if self.timerOn{
-            // Check queue empty and flir save ends
-            if self.saveImgQueue.operationCount==0 && self.saveNowFlir == false{
-                // Check time
-                self.saveTimer.stop()
-                if self.saveTimer.durationSeconds() > Double(self.shootingPeriodInt){
-                    self.saveNow = true
-                    self.updateImgs()
-                    // tick animation
-                    self.animateTick()
-                    self.shootingPeriodLabel.text = String(format: "%.2f sec", self.saveTimer.durationSeconds())
-                    self.saveTimer.start()
-                }
-            }
-            else{
-                return
-            }
-        }
-        else{
-            self.saveTimer.start()
-            self.updateImgs()
-        }
-        
-        
-        if self.timerOn == false || (self.timerOn == true && self.saveNow){
+        //if self.timerOn == false || (self.timerOn == true && self.saveNow){
+        if true{
             // Point clouds
             guard let drawable = view.currentDrawable else {return}
             
@@ -649,28 +706,6 @@ extension PointCloudViewController: MTKViewDelegate {
             commandBuffer.waitUntilCompleted()
         }
         
-        // Work for manual & timer capture
-        if self.saveNow{
-            // Create folder
-            self.fm.createFolderIfNeeded()
-            // Update frame count
-            self.save_cnt = self.fm.getNextCnt(subDir: "meta_json")
-            
-            // Send flag to FLIR
-            if self.flir_on{
-                // Save flag for flir
-                self.saveNowFlir = true
-            }
-            
-            // Add operation
-            self.saveImgQueue.addOperation {
-                // Save file
-                self.saveFiles()
-            }
-            
-            // Turn off saveNow flag after addOperation
-            self.saveNow = false
-        }
    
         
     }
