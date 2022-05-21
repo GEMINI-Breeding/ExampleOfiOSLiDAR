@@ -50,6 +50,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     @IBOutlet weak var distanceSlider: UISlider!
     @IBOutlet weak var imageView: UIImageView!
     @IBOutlet weak var rgbimageView: UIImageView!
+    @IBOutlet weak var confiimageView: UIImageView!
     
     @IBOutlet weak var shootingPeriodLabel: UILabel!
     @IBOutlet weak var shootingPeriodSlider: UISlider!
@@ -264,6 +265,8 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         //self.depth_img = CIImage(cvPixelBuffer: pixelBuffer).oriented(tiffOrientation)
         self.depth_img = session.currentFrame?.depthMapTransformedImageCIImage(orientation: tiffOrientation)
         self.depthImageView.image = session.currentFrame?.depthMapTransformedNormalizedImage(orientation: orientation, viewPort: depth_ROI)
+        
+        //self.confiimageView.image = session.currentFrame?.ConfidenceMapTransformedImage(orientation: orientation, viewPort: depth_ROI)
     }
     
     func processFLIR(){
@@ -333,7 +336,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
             print(error)
         }
         // @TODO: Save iPhone Point cloud *.ply file
-        self.renderer.savePoints()
+        // self.renderer.savePoints()
         // Save GPS Coordinate, Roll, Pich, Yaw
         self.saveJson()
     }
@@ -380,7 +383,10 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
             configuration.environmentTexturing = .automatic
             if type(of: configuration).supportsFrameSemantics(.sceneDepth) {
                configuration.frameSemantics = .sceneDepth
+                //configuration.frameSemantics =  [.sceneDepth, .smoothedSceneDepth]
+               
             }
+
 
             return configuration
         }
@@ -520,7 +526,6 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     
     // FLIR
     @IBAction func connectDeviceClicked(_ sender: Any) {
-        self.flir_on = true
         self.batteryStopWatch.start()
         discovery?.start(.lightning)
     }
@@ -654,7 +659,7 @@ extension PointCloudViewController: MTKViewDelegate {
             // Create folder
             self.fm.createFolderIfNeeded()
             // Update frame count
-            self.save_cnt = self.fm.getNextCnt(subDir: "meta_json")
+            self.saveCnt = self.fm.getNextCnt(subDir: "meta_json")
             
             // Send flag to FLIR
             if self.flir_on{

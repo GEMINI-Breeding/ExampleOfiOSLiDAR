@@ -40,6 +40,7 @@
 		5E22DC722821FFBE0098870B /* metronome.wav in Resources */ = {isa = PBXBuildFile; fileRef = 5E22DC712821FFBE0098870B /* metronome.wav */; };
 		5E22DC74282241520098870B /* CVPixelBufferExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E22DC73282241520098870B /* CVPixelBufferExtension.swift */; };
 		5E22DC76282444A30098870B /* LocalFileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E22DC75282444A30098870B /* LocalFileManager.swift */; };
+		5E8D4D3D2838A98F00B40F6E /* ARReceiver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E8D4D3C2838A98E00B40F6E /* ARReceiver.swift */; };
 		5EAB24F1280A2F0C0001D43E /* FLIROne.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 5EAB24F0280A2F0C0001D43E /* FLIROne.storyboard */; };
 		5EAB24F4280A2F220001D43E /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EAB24F2280A2F220001D43E /* ViewController.swift */; };
 		5EAB24F5280A2F220001D43E /* ViewController_album.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EAB24F3280A2F220001D43E /* ViewController_album.swift */; };
@@ -146,6 +147,7 @@
 		5E22DC712821FFBE0098870B /* metronome.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = metronome.wav; sourceTree = "<group>"; };
 		5E22DC73282241520098870B /* CVPixelBufferExtension.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CVPixelBufferExtension.swift; sourceTree = "<group>"; };
 		5E22DC75282444A30098870B /* LocalFileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalFileManager.swift; sourceTree = "<group>"; };
+		5E8D4D3C2838A98E00B40F6E /* ARReceiver.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ARReceiver.swift; sourceTree = "<group>"; };
 		5EAB24F0280A2F0C0001D43E /* FLIROne.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = FLIROne.storyboard; sourceTree = "<group>"; };
 		5EAB24F2280A2F220001D43E /* ViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
 		5EAB24F3280A2F220001D43E /* ViewController_album.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewController_album.swift; sourceTree = "<group>"; };
@@ -229,6 +231,7 @@
 				1EF5A0CF26AA1D6600E49415 /* PointCloud.storyboard */,
 				1EF5A0CE26AA1D6600E49415 /* PointCloudViewController.swift */,
 				1E9A572126AAA0990083CFDD /* PointCloudRenderer.swift */,
+				5E8D4D3C2838A98E00B40F6E /* ARReceiver.swift */,
 				1E9A572726AAA5B40083CFDD /* PointCloudShaderTypes.h */,
 				1E9A572526AAA5A80083CFDD /* PointCloudShaders.metal */,
 			);
@@ -533,6 +536,7 @@
 				1E2B6D5725C68D3700F76D8C /* ConfidenceMapViewController.swift in Sources */,
 				1E758FBC25D7412F001F6BA2 /* ScanViewController.swift in Sources */,
 				1E470F9125AF932000D8D918 /* ARFrame+Ext.swift in Sources */,
+				5E8D4D3D2838A98F00B40F6E /* ARReceiver.swift in Sources */,
 				1EEE225E25A7039B00706DE8 /* Experience.rcproject in Sources */,
 				1E59318A25D48BD2002CCCC9 /* ARMeshGeometry+Ext.swift in Sources */,
 				1E34C94A25D323A700800E8D /* ExportViewController.swift in Sources */,
@@ -644,7 +648,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.7;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -701,7 +705,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.7;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.4;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
