@@ -1,4 +1,4 @@
-//
+ //
 //  ARFrame+Ext.swift
 //  ExampleOfiOSLiDAR
 //
@@ -180,6 +180,19 @@ extension ARFrame {
         return UIImage(ciImage: screenTransformed(ciImage: ciImage, orientation: orientation, viewPort: viewPort))
     }
 
+    func ConfidenceMapRawImage(orientation: CGImagePropertyOrientation) -> CIImage? {
+        guard let pixelBuffer = self.sceneDepth?.confidenceMap else { return nil }
+        let pixelBufferCopy: CVPixelBuffer!
+        do
+        {
+            try pixelBufferCopy = pixelBuffer.copy()
+
+        } catch{
+            pixelBufferCopy = pixelBuffer
+        }
+        return CIImage(cvPixelBuffer: pixelBufferCopy).oriented(orientation)
+    }
+    
     func ConfidenceMapTransformedImage(orientation: UIInterfaceOrientation, viewPort: CGRect) -> UIImage? {
         guard let pixelBuffer = self.sceneDepth?.confidenceMap,
               let ciImage = confidenceMapToCIImage(pixelBuffer: pixelBuffer) else { return nil }

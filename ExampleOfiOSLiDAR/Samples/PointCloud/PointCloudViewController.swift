@@ -1,4 +1,4 @@
-//
+../ExampleOfiOSLiDAR/Samples/PointCloud/PointCloudViewController.swift//
 //  ViewController.swift
 //  ExampleOfiOSLiDAR
 //
@@ -109,6 +109,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     @IBOutlet weak var yawLabel: UILabel!
     //////////
     var depth_img: CIImage!
+    var confi_img: CIImage!
     var rgb_img: UIImage!
     @IBOutlet weak var depthImageView: UIImageView!
     var iPhone_rgb_img: UIImage!
@@ -229,11 +230,11 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
                                     (iCamIntrinsics![2][2])
                                     )
         //@TODO: Add more metadata
-        let personArray =  [["info": ["timestamp": "\(self.timestamp)", "FLIRBatteryPercent": "\(self.batteryPercent!)",
-                                    "iCamIntrinsics": iCamIntrinsicsString]],
-                            ["gps": ["latitude": "\(self.locValue.latitude)", "longitude": "\(self.locValue.longitude)", "altitude": "\(self.altitude)"]],
-                            ["attitude": ["roll": "\(self.roll)", "pitch": "\(self.pitch)", "yaw": "\(self.yaw)"]],
-                            ["thermal": ["min": self.t_min, "max": self.t_max, "avg": self.t_average]],
+        let personArray =  ["info": ["timestamp": "\(self.timestamp)", "FLIRBatteryPercent": "\(self.batteryPercent!)",
+                                    "iCamIntrinsics": iCamIntrinsicsString],
+                            "gps": ["latitude": "\(self.locValue.latitude)", "longitude": "\(self.locValue.longitude)", "altitude": "\(self.altitude)"],
+                            "attitude": ["roll": "\(self.roll)", "pitch": "\(self.pitch)", "yaw": "\(self.yaw)"],
+                            "thermal": ["min": self.t_min, "max": self.t_max, "avg": self.t_average],
                             ]
         
         // Get the url of Persons.json in document directory
@@ -248,7 +249,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
 
         // Transform array into data and save it into file
         var error: NSError?
-        JSONSerialization.writeJSONObject(personArray, to: stream, options: [], error: &error)
+        JSONSerialization.writeJSONObject(personArray, to: stream, options: [.prettyPrinted, .sortedKeys], error: &error)
 
         // Handle error
         if let error = error {
@@ -258,6 +259,9 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     
     func updateImgs()
     {
+        
+        // Update images
+        
         // iPhone RGB & Depth
         let depth_ROI = CGRect(x: 0, y: 0, width: 1440, height: 1920)
         //self.iPhone_rgb_img = session.currentFrame?.ColorTransformedImage(orientation: tiffOrientation)
@@ -271,7 +275,8 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         self.depth_img = session.currentFrame?.depthMapTransformedImageCIImage(orientation: tiffOrientation)
         self.depthImageView.image = session.currentFrame?.depthMapTransformedNormalizedImage(orientation: orientation, viewPort: depth_ROI)
         
-        //self.confiimageView.image = session.currentFrame?.ConfidenceMapTransformedImage(orientation: orientation, viewPort: depth_ROI)
+        self.confi_img = session.currentFrame?.ConfidenceMapRawImage(orientation: tiffOrientation)
+        self.confiimageView.image = session.currentFrame?.ConfidenceMapTransformedImage(orientation: orientation, viewPort: depth_ROI)
     }
     
     func processFLIR(){
@@ -340,6 +345,15 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
             print("Save TIFF failed")
             print(error)
         }
+        
+        let confidence_url = self.fm.getPathForImageExt(subdir: "confidence_tiff", name: genFileName(), ext: "tiff")
+        do {
+            try context.writeTIFFRepresentation(of: self.confi_img, to: confidence_url!, format: context.workingFormat, colorSpace: context.workingColorSpace!, options: [:])
+        } catch {
+            print("Save TIFF failed")
+            print(error)
+        }
+        
         // @TODO: Save iPhone Point cloud *.ply file
         // self.renderer.savePoints()
         // Save GPS Coordinate, Roll, Pich, Yaw

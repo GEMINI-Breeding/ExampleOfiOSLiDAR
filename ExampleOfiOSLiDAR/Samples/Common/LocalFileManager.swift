@@ -83,7 +83,7 @@ class LocalFileManager{
     func createFolderIfNeeded()
     {
         self.folder_name = genTodayFolder()
-        let subDirs: [String] = ["flir_jpg","flir_processed","depth_tiff","rgb_jpg","meta_json"]
+        let subDirs: [String] = ["flir_jpg","flir_processed","depth_tiff","confidence_tiff", "rgb_jpg","meta_json"]
         for (subDir) in subDirs{
             guard
                 let path = FileManager
