@@ -193,11 +193,29 @@ extension ARFrame {
         return CIImage(cvPixelBuffer: pixelBufferCopy).oriented(orientation)
     }
     
+    func ConfidenceMapRawBuffer(orientation: CGImagePropertyOrientation) -> CVPixelBuffer? {
+        guard let pixelBuffer = self.sceneDepth?.confidenceMap else { return nil }
+        let pixelBufferCopy: CVPixelBuffer!
+        do
+        {
+            try pixelBufferCopy = pixelBuffer.copy()
+
+        } catch{
+            pixelBufferCopy = pixelBuffer
+        }
+        return pixelBufferCopy
+    }
+    
     func ConfidenceMapTransformedImage(orientation: UIInterfaceOrientation, viewPort: CGRect) -> UIImage? {
         guard let pixelBuffer = self.sceneDepth?.confidenceMap,
               let ciImage = confidenceMapToCIImage(pixelBuffer: pixelBuffer) else { return nil }
         
         return UIImage(ciImage: screenTransformed(ciImage: ciImage, orientation: orientation, viewPort: viewPort))
+    }
+    
+    func ConfidenceMapTransformedRawImage(pixelBuffer: CVPixelBuffer, orientation: UIInterfaceOrientation, viewPort: CGRect) -> UIImage? {
+        let ciImage = confidenceMapToCIImage(pixelBuffer: pixelBuffer)
+        return UIImage(ciImage: screenTransformed(ciImage: ciImage!, orientation: orientation, viewPort: viewPort))
     }
     
     func ColorTransformedImage(orientation: UIInterfaceOrientation, viewPort: CGRect) -> UIImage? {

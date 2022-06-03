@@ -1,4 +1,4 @@
-../ExampleOfiOSLiDAR/Samples/PointCloud/PointCloudViewController.swift//
+//
 //  ViewController.swift
 //  ExampleOfiOSLiDAR
 //
@@ -64,7 +64,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     
     var saveCnt: Int = 0
     
-    var shootingPeriodInt: Int = 1
+    var shootingPeriodInt: Int = 0
     
     var shootingStart: Bool = false
     
@@ -202,7 +202,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     
     func reset_sliders()
     {
-        shootingPeriodSlider.minimumValue = 1
+        shootingPeriodSlider.minimumValue = 0
         shootingPeriodSlider.maximumValue = 10
         shootingPeriodSlider.value = 5
     }
@@ -275,8 +275,14 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         self.depth_img = session.currentFrame?.depthMapTransformedImageCIImage(orientation: tiffOrientation)
         self.depthImageView.image = session.currentFrame?.depthMapTransformedNormalizedImage(orientation: orientation, viewPort: depth_ROI)
         
-        self.confi_img = session.currentFrame?.ConfidenceMapRawImage(orientation: tiffOrientation)
-        self.confiimageView.image = session.currentFrame?.ConfidenceMapTransformedImage(orientation: orientation, viewPort: depth_ROI)
+        //self.confi_img = session.currentFrame?.ConfidenceMapRawImage(orientation: tiffOrientation)
+        let confiBuff = session.currentFrame?.ConfidenceMapRawBuffer(orientation: tiffOrientation)
+        if (confiBuff != nil){
+            self.confi_img = CIImage(cvPixelBuffer: confiBuff!).oriented(tiffOrientation)
+            //self.confiimageView.image = session.currentFrame?.ConfidenceMapTransformedImage(orientation: orientation, viewPort: depth_ROI)
+            self.confiimageView.image = session.currentFrame?.ConfidenceMapTransformedRawImage(pixelBuffer: confiBuff!, orientation: orientation, viewPort: depth_ROI)
+        }
+           
     }
     
     func processFLIR(){
