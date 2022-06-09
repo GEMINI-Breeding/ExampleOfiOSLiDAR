@@ -64,7 +64,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     
     var saveCnt: Int = 0
     
-    var shootingPeriodInt: Int = 0
+    var shootingPeriodInt: Int = 1
     
     var shootingStart: Bool = false
     
@@ -98,7 +98,8 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     @IBOutlet weak var LonLabel: UILabel!
     @IBOutlet weak var altitudeLabel: UILabel!
     var altitude: Double = 0.0
-    var timestamp: Date = Date()
+    var locationTimestamp: Date = Date()
+    //var timeIntervalSince1970: Date = Date()
     
     var motionManager    = CMMotionManager()
     var roll = 0.0
@@ -230,9 +231,9 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
                                     (iCamIntrinsics![2][2])
                                     )
         //@TODO: Add more metadata
-        let personArray =  ["info": ["timestamp": "\(self.timestamp)", "FLIRBatteryPercent": "\(self.batteryPercent!)",
+        let personArray =  ["info": ["epochTime": "\(Date().timeIntervalSince1970)", "FLIRBatteryPercent": "\(self.batteryPercent!)",
                                     "iCamIntrinsics": iCamIntrinsicsString],
-                            "gps": ["latitude": "\(self.locValue.latitude)", "longitude": "\(self.locValue.longitude)", "altitude": "\(self.altitude)"],
+                            "gps": ["timestamp": "\(self.locationTimestamp)", "latitude": "\(self.locValue.latitude)", "longitude": "\(self.locValue.longitude)", "altitude": "\(self.altitude)"],
                             "attitude": ["roll": "\(self.roll)", "pitch": "\(self.pitch)", "yaw": "\(self.yaw)"],
                             "thermal": ["min": self.t_min, "max": self.t_max, "avg": self.t_average],
                             ]
@@ -300,8 +301,8 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
             let ir_name = theFileName.replacingOccurrences(of: ".jpg", with: "_IR")
             let rgb_name = theFileName.replacingOccurrences(of: ".jpg", with: "_RGB")
             
-            let ir_path = self.fm.getPathForImageExt(subdir: "flir_processed", name: ir_name, ext: "png")
-            let rgb_path = self.fm.getPathForImageExt(subdir: "flir_processed", name: rgb_name, ext: "png")
+            let ir_path = self.fm.getPathForImageExt(subdir: "flir_processed", name: ir_name, ext: "jpg")
+            let rgb_path = self.fm.getPathForImageExt(subdir: "flir_processed", name: rgb_name, ext: "jpg")
             
             
             if let fusion = thermalImage.getFusion() {
@@ -317,12 +318,14 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
 
                 let ir_image = thermalImage.getImage()!
                 //let new_ir_image = ir_image.rotate(radians: 0) // Rotate 180 degrees
-                self.fm.savePng(image: ir_image, path: ir_path!)
+                //self.fm.savePng(image: ir_image, path: ir_path!)
+                self.fm.saveJpg(image: ir_image, path: ir_path!)
                 
                 fusion.setFusionMode(VISUAL_MODE)
                 let rgb_image = thermalImage.getImage()!
                 //let new_rgb_image = rgb_image.rotate(radians: 0) // Rotate 180 degrees
-                self.fm.savePng(image: rgb_image, path: rgb_path!)
+                //self.fm.savePng(image: rgb_image, path: rgb_path!)
+                self.fm.saveJpg(image: ir_image, path: ir_path!)
             }
             
             if let statistics = thermalImage.getStatistics() {
@@ -583,7 +586,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         
         self.locValue = locValue
         self.altitude = alt
-        self.timestamp = timestamp
+        self.locationTimestamp = timestamp
         
         LatLabel.text = String(format:"Lat: %.6f", locValue.latitude)
         LonLabel.text = String(format:"Lon: %.6f", locValue.longitude)
@@ -658,7 +661,8 @@ extension PointCloudViewController: MTKViewDelegate {
         }
         
         
-        if self.timerOn == false || (self.timerOn == true && self.saveNow){
+        //if self.timerOn == false || (self.timerOn == true && self.saveNow){
+        if self.timerOn == false{ // Do not update while recording
             // Point clouds
             guard let drawable = view.currentDrawable else {return}
             
