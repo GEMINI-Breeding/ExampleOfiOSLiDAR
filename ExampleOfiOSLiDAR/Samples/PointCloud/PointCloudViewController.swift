@@ -296,7 +296,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         {
             thermalImage.open(path!)
             thermalImage.setTemperatureUnit(.CELSIUS)
-
+            
             let theFileName = (path! as NSString).lastPathComponent
             let ir_name = theFileName.replacingOccurrences(of: ".jpg", with: "_IR")
             let rgb_name = theFileName.replacingOccurrences(of: ".jpg", with: "_RGB")
@@ -315,7 +315,6 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
                 thermalImage.palette = self.pm.gray
                 //print(thermalImage.palette?.name)
                 
-
                 let ir_image = thermalImage.getImage()!
                 //let new_ir_image = ir_image.rotate(radians: 0) // Rotate 180 degrees
                 //self.fm.savePng(image: ir_image, path: ir_path!)
@@ -325,7 +324,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
                 let rgb_image = thermalImage.getImage()!
                 //let new_rgb_image = rgb_image.rotate(radians: 0) // Rotate 180 degrees
                 //self.fm.savePng(image: rgb_image, path: rgb_path!)
-                self.fm.saveJpg(image: ir_image, path: ir_path!)
+                self.fm.saveJpg(image: rgb_image, path: rgb_path!)
             }
             
             if let statistics = thermalImage.getStatistics() {
@@ -412,7 +411,12 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
             if type(of: configuration).supportsFrameSemantics(.sceneDepth) {
                configuration.frameSemantics = .sceneDepth
                 //configuration.frameSemantics =  [.sceneDepth, .smoothedSceneDepth]
-               
+                
+                // Disable Auto focus
+                if configuration.isAutoFocusEnabled{
+                    configuration.isAutoFocusEnabled = false
+                }
+                
             }
 
 
@@ -812,7 +816,7 @@ extension PointCloudViewController : FLIRStreamDelegate {
                         let thermal_image = self.thermalStreamer?.getImage()
                         //self.thermal_img = thermal_image
                         self.imageView.image = thermal_image
-                        self.rgb_img = image.getPhoto()
+                        //self.rgb_img = image.getPhoto()
                         //self.rgbimageView.image = self.rgb_img
                         
                         if let measurements = image.measurements {
