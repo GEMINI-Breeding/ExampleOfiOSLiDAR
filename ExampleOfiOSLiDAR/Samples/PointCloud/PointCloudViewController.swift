@@ -20,7 +20,10 @@ import RealityKit
 // Roll pitch yaw
 import CoreMotion
 
-class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, CLLocationManagerDelegate {
+// Bluetooth
+import CoreBluetooth
+
+class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, CLLocationManagerDelegate, CBCentralManagerDelegate, CBPeripheralDelegate {
 
     
     @IBOutlet weak var mtkView: MTKView!
@@ -131,7 +134,26 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     private lazy var library: MTLLibrary = device.makeDefaultLibrary()!
     
     let myMetronome = Metronome()
-
+    
+    // Bluetooth
+    @IBOutlet weak var humidity: UILabel!
+    @IBOutlet weak var humidityLabel: UILabel!
+    @IBOutlet weak var temperature: UILabel!
+    @IBOutlet weak var temperatureLabel: UILabel!
+    @IBOutlet weak var connectionStatus: UILabel!
+   
+    var humidityValue = 0.0
+    var temperatureValue = 0.0
+    var dataShown = false
+    var centralManager:CBCentralManager!
+    var sensorPeripheral: CBPeripheral!
+    var bluetoothReady = false
+    let serviceUUID = CBUUID(string: "0000ffe0-0000-1000-8000-00805f9b34fb")        // Default HM-10 service UUID
+    let characteristicUUID = CBUUID(string: "0000ffe1-0000-1000-8000-00805f9b34fb") // Default HM-10 characteristic UUID
+    let deviceName = "HMSoft"
+    
+    // Bluetooth
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
@@ -233,6 +255,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         //@TODO: Add more metadata
         let personArray =  ["info": ["epochTime": "\(Date().timeIntervalSince1970)", "FLIRBatteryPercent": "\(self.batteryPercent!)",
                                     "iCamIntrinsics": iCamIntrinsicsString],
+                            "climate": ["temperature": "\(self.temperatureValue)", "RH": "\(self.humidityValue)"],
                             "gps": ["timestamp": "\(self.locationTimestamp)", "latitude": "\(self.locValue.latitude)", "longitude": "\(self.locValue.longitude)", "altitude": "\(self.altitude)"],
                             "attitude": ["roll": "\(self.roll)", "pitch": "\(self.pitch)", "yaw": "\(self.yaw)"],
                             "thermal": ["min": self.t_min, "max": self.t_max, "avg": self.t_average],
@@ -486,7 +509,198 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
             }
         }
         
+        
+        // Bluetooth
+        startUpCentralManager()
+        
     }
+    
+    // Bluetooth
+    override func didReceiveMemoryWarning() {
+        
+        super.didReceiveMemoryWarning()
+        
+    }
+    
+    func preferredStatusBarStyle() -> UIStatusBarStyle {
+
+        return UIStatusBarStyle.lightContent
+
+    }
+
+    func startUpCentralManager(){
+        
+        centralManager = CBCentralManager(delegate: self, queue: nil)
+        
+    }
+    
+    func sensorTagFound (advertisementData: [NSObject : AnyObject]!) -> Bool {
+        
+        let nameOfDeviceFound = (advertisementData as NSDictionary).object(forKey: CBAdvertisementDataLocalNameKey) as? NSString
+        return (nameOfDeviceFound! as String == self.deviceName)
+        
+    }
+    
+    func centralManager(central: CBCentralManager, didDiscoverPeripheral peripheral: CBPeripheral, advertisementData: [NSObject : AnyObject], RSSI: NSNumber) {
+        
+        if self.sensorTagFound(advertisementData: advertisementData) == true {
+            self.centralManager.stopScan()
+            self.sensorPeripheral = peripheral
+            self.sensorPeripheral.delegate = self
+            self.centralManager.connect(peripheral, options: nil)
+        }
+        else {
+            print("Not Found")
+        }
+        
+    }
+    
+    func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String : Any], rssi RSSI: NSNumber) {
+        print("Function: \(#function),Line: \(#line)")
+        
+        //      if peripheralArray.contains(peripheral) {
+        //          print("Duplicate Found.")
+        //      } else {
+        //        peripheralArray.append(peripheral)
+        //        rssiArray.append(RSSI)
+        //      }
+        //
+        //      peripheralFoundLabel.text = "Peripherals Found: \(peripheralArray.count)"
+        self.centralManager.stopScan()
+        self.sensorPeripheral = peripheral
+        self.sensorPeripheral.delegate = self
+        self.centralManager.connect(peripheral, options: nil)
+        
+        print("Peripheral Discovered: \(peripheral)")
+
+    }
+    
+    func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
+        
+        self.connectionStatus.text = "Discovering peripheral services"
+        peripheral.discoverServices([serviceUUID])
+    }
+    
+    
+    func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
+        
+        self.connectionStatus.text = "Disconnected"
+        central.scanForPeripherals(withServices: nil, options: nil)
+        
+    }
+    
+    func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
+        
+        self.connectionStatus.text = "Looking at peripheral services"
+        for service in peripheral.services! {
+            let thisService = service as CBService
+            if thisService.uuid == self.serviceUUID {
+                peripheral.discoverCharacteristics(nil, for: thisService)
+            }
+        }
+        
+    }
+    
+    func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
+        
+        self.connectionStatus.text = "Waiting for data"
+               
+        for charateristic in service.characteristics! {
+            let thisCharacteristic = charateristic as CBCharacteristic
+            if thisCharacteristic.uuid == self.characteristicUUID {
+                self.sensorPeripheral.setNotifyValue(true, for: thisCharacteristic)
+            }
+        }
+        
+    }
+    
+    func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
+        
+        self.connectionStatus.text = "Connected"
+        
+        let humidity = HomeSense.getHumidity(value: characteristic.value!)
+        let temperature = HomeSense.getTemperature(value: characteristic.value!)
+        
+        self.humidityValue = Double(humidity)!
+        self.temperatureValue = Double(temperature)!
+        
+        self.temperature.text = "Air T:\(temperature) °C"
+        self.humidity.text = "RH:\(humidity) %"
+        
+        // Eye candy ;-)
+        
+//        if !self.dataShown {
+//
+//            self.temperature.layer.position.y += 80
+//            self.humidity.layer.position.y -= 80
+//
+//            UIView.animate(withDuration: 0.5, animations: {
+//                self.temperatureLabel.alpha = 1.0
+//            })
+//
+//            UIView.animate(withDuration: 0.5, delay: 0.2, options: [], animations: {
+//                self.humidityLabel.alpha = 1.0
+//                }, completion: nil)
+//
+//            UIView.animate(withDuration: 0.5, delay: 0.4, options: [], animations: {
+//                self.temperature.alpha = 1.0
+//                self.temperature.layer.position.y -= 80
+//                }, completion: nil)
+//
+//            UIView.animate(withDuration: 0.5, delay: 0.4, options: [], animations: {
+//                self.humidity.alpha = 1.0
+//                self.humidity.layer.position.y += 80
+//                }, completion: nil)
+//
+//            UIView.animate(withDuration: 0.5, delay: 0.1, options: [], animations: {
+//                self.connectionStatus.alpha = 0.0
+//            }, completion: nil)
+//
+//            self.dataShown = true
+//        }
+        
+    }
+    
+    func dissconnectDevice() {
+        centralManager.stopScan()
+        if((sensorPeripheral) != nil){
+            centralManager.cancelPeripheralConnection(sensorPeripheral)
+        }
+    }
+    
+    func stopScanning() -> Void {
+        self.connectionStatus.text = ""
+        centralManager?.stopScan()
+    }
+    
+    func centralManagerDidUpdateState(_ central: CBCentralManager) {
+        
+        var msg = ""
+        switch (central.state) {
+        case .poweredOff:
+            msg = "BLE hardware is powered off"
+        case .poweredOn:
+            msg = "BLE hardware is ready"
+            bluetoothReady = true;
+        case .resetting:
+            msg = "BLE hardware is resetting"
+        case .unauthorized:
+            msg = "BLE state is unauthorized"
+        case .unknown:
+            msg = "BLE state is unknown"
+        case .unsupported:
+            msg = "BLE hardware is unsupported on this platform"
+        }
+
+        self.connectionStatus.text = msg
+        
+        if bluetoothReady {
+            central.scanForPeripherals(withServices: [serviceUUID], options: nil)
+        }
+        
+    }
+    // Bluetooth
+    
     
     // FLIR
     func requireCamera() {

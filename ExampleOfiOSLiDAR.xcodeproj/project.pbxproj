@@ -64,6 +64,7 @@
 		5EB73AFF282E220B00CE9C95 /* MeterLink.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5EB73963282E15EC00CE9C95 /* MeterLink.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		5EB73B00282E220C00CE9C95 /* ThermalSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5EB73A2F282E15ED00CE9C95 /* ThermalSDK.framework */; };
 		5EB73B01282E220C00CE9C95 /* ThermalSDK.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 5EB73A2F282E15ED00CE9C95 /* ThermalSDK.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		5EDA080B2856EAC4001DA16F /* HomeSense.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EDA080A2856EAC4001DA16F /* HomeSense.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -161,6 +162,7 @@
 		5EB73A2F282E15ED00CE9C95 /* ThermalSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = ThermalSDK.framework; sourceTree = "<group>"; };
 		5EB73A30282E15ED00CE9C95 /* libswscale.5.dylib.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = libswscale.5.dylib.framework; sourceTree = "<group>"; };
 		5EB73A31282E15ED00CE9C95 /* libavcodec.58.dylib.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = libavcodec.58.dylib.framework; sourceTree = "<group>"; };
+		5EDA080A2856EAC4001DA16F /* HomeSense.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HomeSense.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -338,6 +340,7 @@
 				5E22DC75282444A30098870B /* LocalFileManager.swift */,
 				5E22DC73282241520098870B /* CVPixelBufferExtension.swift */,
 				5E22DC6E2821F7830098870B /* Metronome.swift */,
+				5EDA080A2856EAC4001DA16F /* HomeSense.swift */,
 				5E22DC702821FFBE0098870B /* Resources */,
 			);
 			path = Common;
@@ -519,6 +522,7 @@
 			files = (
 				1E1875B425D7A89500C09A98 /* SCNGeometry+Ext.swift in Sources */,
 				5EAB24F4280A2F220001D43E /* ViewController.swift in Sources */,
+				5EDA080B2856EAC4001DA16F /* HomeSense.swift in Sources */,
 				1E9A572426AAA1180083CFDD /* Helpers.swift in Sources */,
 				5E22DC6F2821F7830098870B /* Metronome.swift in Sources */,
 				1ED25C4025C7EC7800CDB5AE /* CollisionViewController.swift in Sources */,
@@ -698,6 +702,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = s;
 				GCC_THREADSAFE_STATICS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -754,6 +759,7 @@
 					"$(PROJECT_DIR)/thermal-sdk-ios-objc-arm64-1.11.0",
 					"$(PROJECT_DIR)/thermal-sdk-ios-objc-arm64-1.12.0",
 				);
+				GCC_OPTIMIZATION_LEVEL = s;
 				INFOPLIST_FILE = ExampleOfiOSLiDAR/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

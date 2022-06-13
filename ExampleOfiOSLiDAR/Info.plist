@@ -62,5 +62,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Yes</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>Yes</string>
 </dict>
 </plist>
