@@ -31,46 +31,35 @@ void genTodayCsv(char *str, int strLen)
           now.year(), now.month(), now.day());
 }
 
-void createFile()
+void sdCardLogging(float temp, float rh)
 {
-  char fileName[40];
   char str[100];
-  genTodayCsv(fileName,sizeof(fileName));
-  if(SD.exists(fileName))
+  char fileName[40];
+  genTodayCsv(fileName, sizeof(fileName));
+  // Create file
+  if (!SD.exists(fileName))
   {
-    // Append
-  }else{
     // Create file
     File dataFile = SD.open(fileName, FILE_WRITE);
-
-    sprintf(str, "Time(YYYY-MM-DD HH:MM:SS),Temperature(°C),Relative Humidity(%)");
+    sprintf(str, "Time(YYYY-MM-DD HH:MM:SS),Temperature(°C),Relative Humidity(Percent)");
     if (dataFile)
     {
       dataFile.println(str);
       dataFile.close();
     }
   }
-}
-
-void sdCardLogging(float temp, float rh)
-{
-  char str[100];
-  genTodayCsv(str, sizeof(str));
-  File dataFile = SD.open(str, FILE_WRITE);
-  // Create file
-  if (!SD.exists(str))
-  {
-    // Header
-    sprintf(str, "Time(YYYY-MM-DD HH:MM:SS),Temperature(°C),Relative Humidity(%)");
-  }
   else
   {
     // Data
     DateTime now = RTC.now();
+    File dataFile = SD.open(fileName, FILE_WRITE);
     sprintf(str, "%d-%d-%d %02d:%02d:%02d,%d.%02d,%d.%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second(), (int)temp, (int)(temp * 100) % 100, (int)rh, (int)(rh * 100) % 100);
+    if (dataFile)
+    {
+      dataFile.println(str);
+      dataFile.close();
+    }
   }
-  dataFile.println(str);
-  dataFile.close();
 }
 
 void setup()
