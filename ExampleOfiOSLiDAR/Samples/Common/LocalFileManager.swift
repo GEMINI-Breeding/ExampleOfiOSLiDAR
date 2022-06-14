@@ -8,6 +8,9 @@
 import Foundation
 import UIKit
 import simd
+import UniformTypeIdentifiers
+import CoreLocation
+import MobileCoreServices
 
 class LocalFileManager{
     
@@ -200,11 +203,36 @@ class LocalFileManager{
         
     }
     
-    func saveJpg(image: UIImage, path: URL) {
-        if let jpgData = image.jpegData(compressionQuality: 0.5)
-        {
-            try? jpgData.write(to: path)
+    func saveJpg(image: UIImage, path: URL, location: CLLocation?, roll:Double, pitch:Double, yaw:Double) {
+        
+//        if let jpgData = image.jpegData(compressionQuality: 0.5)
+//        {
+//            try? jpgData.write(to: path)
+//        }
+        
+        let metaData = Samples/Common/LocalFileManager.swiftaddLocation(location!, roll: roll,pitch: pitch,yaw: yaw, toImage: image)
+        
+        /// Saving the image to gallery
+        /// Creating jpgData from UIImage (1 = original quality)
+        guard let jpgData = image.jpegData(compressionQuality: 0.5) else { return }
+
+        /// Adding metaData to jpgData
+        guard let source = CGImageSourceCreateWithData(jpgData as CFData, nil), let uniformTypeIdentifier = CGImageSourceGetType(source) else {
+            return
         }
+
+        let finalData = NSMutableData(data: jpgData)
+        guard let destination = CGImageDestinationCreateWithData(finalData, uniformTypeIdentifier, 1, nil) else { return }
+        CGImageDestinationAddImageFromSource(destination, source, 0, metaData as CFDictionary)
+        guard CGImageDestinationFinalize(destination) else { return }
+
+        /// Now write this image to directory
+        if FileManager.default.fileExists(atPath: path.path) {
+            try? FileManager.default.removeItem(atPath: path.path)
+        }
+
+        let success = FileManager.default.createFile(atPath: path.path, contents: finalData as Data, attributes: [FileAttributeKey.protectionKey : FileProtectionType.complete])
+        
     }
     
     func savePng(image: UIImage, path: URL) {

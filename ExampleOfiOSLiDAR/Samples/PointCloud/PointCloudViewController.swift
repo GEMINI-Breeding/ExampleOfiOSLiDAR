@@ -23,6 +23,9 @@ import CoreMotion
 // Bluetooth
 import CoreBluetooth
 
+import UniformTypeIdentifiers
+import MobileCoreServices
+
 class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, CLLocationManagerDelegate, CBCentralManagerDelegate, CBPeripheralDelegate {
 
     
@@ -95,6 +98,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     let thermalImage:FLIRThermalImageFile! = FLIRThermalImageFile()
     // FLIR
     
+    var location: CLLocation!
     let locationManager = CLLocationManager()
     var locValue =  CLLocationCoordinate2D()
     @IBOutlet weak var LatLabel: UILabel!
@@ -341,13 +345,13 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
                 let ir_image = thermalImage.getImage()!
                 //let new_ir_image = ir_image.rotate(radians: 0) // Rotate 180 degrees
                 //self.fm.savePng(image: ir_image, path: ir_path!)
-                self.fm.saveJpg(image: ir_image, path: ir_path!)
+                self.fm.saveJpg(image: ir_image, path: ir_path!, location: self.location, roll: self.roll,pitch: self.pitch,yaw: self.yaw)
                 
                 fusion.setFusionMode(VISUAL_MODE)
                 let rgb_image = thermalImage.getImage()!
                 //let new_rgb_image = rgb_image.rotate(radians: 0) // Rotate 180 degrees
                 //self.fm.savePng(image: rgb_image, path: rgb_path!)
-                self.fm.saveJpg(image: rgb_image, path: rgb_path!)
+                self.fm.saveJpg(image: rgb_image, path: rgb_path!, location: self.location, roll: self.roll,pitch: self.pitch,yaw: self.yaw)
             }
             
             if let statistics = thermalImage.getStatistics() {
@@ -365,7 +369,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         // Save iPhone jpg
         let rgb_path = self.fm.getPathForImageExt(subdir: "rgb_jpg", name: genFileName(), ext: "jpg")
         
-        self.fm.saveJpg(image: self.iPhone_rgb_img, path: rgb_path!)
+        self.fm.saveJpg(image: self.iPhone_rgb_img, path: rgb_path!, location: self.location, roll: self.roll,pitch: self.pitch,yaw: self.yaw)
         
         // Save iPhone Depth
         let depth_url = self.fm.getPathForImageExt(subdir: "depth_tiff", name: genFileName(), ext: "tiff")
@@ -798,6 +802,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     
     // Location
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        self.location = manager.location
         guard let locValue: CLLocationCoordinate2D = manager.location?.coordinate else { return }
         guard let timestamp: Date = manager.location?.timestamp else { return }
         guard let alt = manager.location?.altitude else { return }
@@ -1127,5 +1132,99 @@ public class Stopwatch {
 
     public func durationSeconds() -> TimeInterval {
         return end_ - start_;
+    }
+}
+
+
+func addLocation(_ location: CLLocation, roll:Double, pitch:Double, yaw:Double, toImage image: UIImage) -> Dictionary<String, Any> {
+
+    /// Initializing the metaData dict
+    var metaData: Dictionary<String, Any> = [:]
+
+    /// Check if image already have its meta data
+    if let ciImage = image.ciImage {
+        metaData = ciImage.properties
+    }
+
+    /// Initializing the gpsData dict
+    var gpsData: Dictionary<String, Any> = [:]
+
+    /// Check if there is any gps information
+    if let gps = metaData[kCGImagePropertyGPSDictionary as String] as? Dictionary<String, Any> {
+        gpsData = gps
+    }
+
+    /// Adding all the required information to gpsData dictionary
+    // #1. Data & Time
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "yyyy:MM:dd HH:mm:ss"
+    let localDate = dateFormatter.string(from: location.timestamp)
+    //gpsData[kCGImagePropertyGPSTimeStamp as String] = localDate
+    gpsData[(kCGImagePropertyGPSTimeStamp as String)] = location.timestamp.isoTime()
+    gpsData[(kCGImagePropertyGPSDateStamp as String)] = location.timestamp.isoDate()
+    gpsData[(kCGImagePropertyGPSVersion as String)] = "2.2.0.0"
+    
+    // #2. Latitude, Longitude
+    var latitude  = location.coordinate.latitude
+    var longitude = location.coordinate.longitude
+    var latRef = ""
+    var lngRef = ""
+    if latitude < 0.0 {
+        latitude *= -1.0
+        latRef = "S"
+    } else  {
+        latRef = "N"
+    }
+
+    if longitude < 0.0 {
+        longitude *= -1.0
+        lngRef = "W"
+    }
+    else {
+        lngRef = "E"
+    }
+
+    gpsData[kCGImagePropertyGPSLatitudeRef as String] = latRef
+    gpsData[kCGImagePropertyGPSLongitudeRef as String] = lngRef
+    gpsData[kCGImagePropertyGPSLatitude as String] = latitude
+    gpsData[kCGImagePropertyGPSLongitude as String] = longitude
+
+    // Roll pitch yaw
+    gpsData["IMURoll"] = roll
+    gpsData["IMUPitch"] = pitch
+    gpsData["IMUYaw"] = yaw
+    
+    // #3. Accuracy
+    // gpsData[kCGImagePropertyGPSDOP as String] = location.horizontalAccuracy
+    gpsData[kCGImagePropertyGPSHPositioningError as String] = location.horizontalAccuracy
+    
+
+    // #4. Altitude
+    gpsData[kCGImagePropertyGPSAltitude as String] = location.altitude
+
+    /// You can add what more you want to add into gpsData and after that
+    /// Add this gpsData information into metaData dictionary
+    metaData[kCGImagePropertyGPSDictionary as String] = gpsData
+
+    return metaData
+}
+
+
+
+
+extension Date {
+
+    func isoDate() -> String {
+        let f = DateFormatter()
+        f.timeZone = TimeZone(abbreviation: "UTC")
+        f.dateFormat = "yyyy:MM:dd"
+        return f.string(from: self)
+    }
+
+    func isoTime() -> String {
+        let f = DateFormatter()
+        f.timeZone = TimeZone(abbreviation: "UTC")
+        f.dateFormat = "HH:mm:ss.SSSSSS"
+        return f.string(from: self)
     }
 }
