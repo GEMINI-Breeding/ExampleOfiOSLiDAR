@@ -51,7 +51,7 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     var camera: FLIRCamera?
     var flirBatt: FLIRBattery?
     
-    @IBOutlet weak var centerSpotLabel: UILabel!
+    //@IBOutlet weak var centerSpotLabel: UILabel!
     @IBOutlet weak var distanceLabel: UILabel!
     @IBOutlet weak var distanceSlider: UISlider!
     @IBOutlet weak var imageView: UIImageView!
@@ -101,8 +101,8 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
     var location: CLLocation!
     let locationManager = CLLocationManager()
     var locValue =  CLLocationCoordinate2D()
-    @IBOutlet weak var LatLabel: UILabel!
-    @IBOutlet weak var LonLabel: UILabel!
+    //@IBOutlet weak var LatLabel: UILabel!
+    //@IBOutlet weak var LonLabel: UILabel!
     @IBOutlet weak var altitudeLabel: UILabel!
     var altitude: Double = 0.0
     var locationTimestamp: Date = Date()
@@ -811,10 +811,10 @@ class PointCloudViewController: UIViewController, UIGestureRecognizerDelegate, C
         self.altitude = alt
         self.locationTimestamp = timestamp
         
-        LatLabel.text = String(format:"Lat: %.6f", locValue.latitude)
-        LonLabel.text = String(format:"Lon: %.6f", locValue.longitude)
-        
-        altitudeLabel.text = String(format:"H: %.2f", alt)
+//        LatLabel.text = String(format:"Lat: %.6f", locValue.latitude)
+//        LonLabel.text = String(format:"Lon: %.6f", locValue.longitude)
+
+        altitudeLabel.text = String(format:"H: %.2fm", alt)
 
         //print("locations = \(locValue.latitude) \(locValue.longitude)")
     }
@@ -1047,9 +1047,9 @@ extension PointCloudViewController : FLIRStreamDelegate {
                                     NSLog("addSpot error \(error)")
                                 }
                             }
-                            if let spot = measurements.getAllSpots().first {
-                                self.centerSpotLabel.text = spot.getValue().description()
-                            }
+//                            if let spot = measurements.getAllSpots().first {
+//                                self.centerSpotLabel.text = spot.getValue().description()
+//                            }
                         }
                         
                         if let statistics = image.getStatistics() {
@@ -1061,12 +1061,12 @@ extension PointCloudViewController : FLIRStreamDelegate {
                             self.averageLabel.text = String(format:"%.2f", self.t_average)
                         }
                         
-                        if let remoteControl = self.camera?.getRemoteControl(),
-                           let fusionController = remoteControl.getFusionController() {
-                            let distance = fusionController.getFusionDistance()
-                            self.distanceLabel.text = "\((distance * 1000).rounded() / 1000)"
-                            self.distanceSlider.value = Float(distance)
-                        }
+//                        if let remoteControl = self.camera?.getRemoteControl(),
+//                           let fusionController = remoteControl.getFusionController() {
+//                            let distance = fusionController.getFusionDistance()
+//                            self.distanceLabel.text = "\((distance * 1000).rounded() / 1000)"
+//                            self.distanceSlider.value = Float(distance)
+//                        }
                         
                         // Update battery info
                         if let remoteControl = self.camera?.getRemoteControl(){
@@ -1148,10 +1148,12 @@ func addLocation(_ location: CLLocation, roll:Double, pitch:Double, yaw:Double, 
 
     /// Initializing the gpsData dict
     var gpsData: Dictionary<String, Any> = [:]
+    var attiData: Dictionary<String, Any> = [:]
 
     /// Check if there is any gps information
     if let gps = metaData[kCGImagePropertyGPSDictionary as String] as? Dictionary<String, Any> {
         gpsData = gps
+        attiData = gps
     }
 
     /// Adding all the required information to gpsData dictionary
@@ -1188,12 +1190,10 @@ func addLocation(_ location: CLLocation, roll:Double, pitch:Double, yaw:Double, 
     gpsData[kCGImagePropertyGPSLongitudeRef as String] = lngRef
     gpsData[kCGImagePropertyGPSLatitude as String] = latitude
     gpsData[kCGImagePropertyGPSLongitude as String] = longitude
-
-    // Roll pitch yaw
-    gpsData["IMURoll"] = roll
-    gpsData["IMUPitch"] = pitch
-    gpsData["IMUYaw"] = yaw
     
+    
+    
+
     // #3. Accuracy
     // gpsData[kCGImagePropertyGPSDOP as String] = location.horizontalAccuracy
     gpsData[kCGImagePropertyGPSHPositioningError as String] = location.horizontalAccuracy
@@ -1201,10 +1201,20 @@ func addLocation(_ location: CLLocation, roll:Double, pitch:Double, yaw:Double, 
 
     // #4. Altitude
     gpsData[kCGImagePropertyGPSAltitude as String] = location.altitude
-
+    
+    //print(gpsData)
+    
     /// You can add what more you want to add into gpsData and after that
     /// Add this gpsData information into metaData dictionary
     metaData[kCGImagePropertyGPSDictionary as String] = gpsData
+    
+    attiData["RollDegree"] = roll
+    attiData["PitchDegree"] = pitch
+    attiData["YawDegree"] = yaw
+    //print(attiData)
+    metaData[kCGImagePropertyRawDictionary as String] = attiData
+    
+    print(metaData)
 
     return metaData
 }

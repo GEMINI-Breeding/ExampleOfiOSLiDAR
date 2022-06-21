@@ -210,7 +210,7 @@ class LocalFileManager{
 //            try? jpgData.write(to: path)
 //        }
         
-        let metaData = Samples/Common/LocalFileManager.swiftaddLocation(location!, roll: roll,pitch: pitch,yaw: yaw, toImage: image)
+        let metaData = addLocation(location!, roll: roll,pitch: pitch,yaw: yaw, toImage: image)
         
         /// Saving the image to gallery
         /// Creating jpgData from UIImage (1 = original quality)
@@ -233,7 +233,55 @@ class LocalFileManager{
 
         let success = FileManager.default.createFile(atPath: path.path, contents: finalData as Data, attributes: [FileAttributeKey.protectionKey : FileProtectionType.complete])
         
+        
+        //let data = toJpegWithExif(image: image, metadata: metaData as NSDictionary, location: location)
+        
     }
+    
+//    func convertCIImageToCGImage(inputImage: CIImage) -> CGImage! {
+//        let context = CIContext(options: nil)
+//        if context != nil {
+//            return context.createCGImage(inputImage, from: inputImage.extent)
+//        }
+//        return nil
+//    }
+//    
+//    func toJpegWithExif(image: UIImage, metadata: NSDictionary, location: CLLocation?) -> Data? {
+//        return autoreleasepool(invoking: { () -> Data in
+//            let data = NSMutableData()
+//            let options = metadata.mutableCopy() as! NSMutableDictionary
+//            options[ kCGImageDestinationLossyCompressionQuality ] = CGFloat(0.5)
+//
+//            // if location is available, add GPS data, thanks to https://gist.github.com/nitrag/343fe13f01bb0ef3692f2ae2dfe33e86
+//            if ( nil != location ) {
+//                let gpsData = NSMutableDictionary()
+//
+//                let altitudeRef = Int(location!.altitude < 0.0 ? 1 : 0)
+//                let latitudeRef = location!.coordinate.latitude < 0.0 ? "S" : "N"
+//                let longitudeRef = location!.coordinate.longitude < 0.0 ? "W" : "E"
+//
+//                // GPS metadata
+//                gpsData[(kCGImagePropertyGPSLatitude as String)] = abs(location!.coordinate.latitude)
+//                gpsData[(kCGImagePropertyGPSLongitude as String)] = abs(location!.coordinate.longitude)
+//                gpsData[(kCGImagePropertyGPSLatitudeRef as String)] = latitudeRef
+//                gpsData[(kCGImagePropertyGPSLongitudeRef as String)] = longitudeRef
+//                gpsData[(kCGImagePropertyGPSAltitude as String)] = Int(abs(location!.altitude))
+//                gpsData[(kCGImagePropertyGPSAltitudeRef as String)] = altitudeRef
+//                gpsData[(kCGImagePropertyGPSTimeStamp as String)] = location!.timestamp.isoTime()
+//                gpsData[(kCGImagePropertyGPSDateStamp as String)] = location!.timestamp.isoDate()
+//                gpsData[(kCGImagePropertyGPSVersion as String)] = "2.2.0.0"
+//
+//                options[ kCGImagePropertyGPSDictionary as String ] = gpsData
+//            }
+//            
+//            let imageDestinationRef = CGImageDestinationCreateWithData(data as CFMutableData, kUTTypeJPEG, 1, nil)!
+//            var ciImage = CIImage(image: image)
+//            var cgiImage = convertCIImageToCGImage(inputImage: ciImage!)
+//            CGImageDestinationAddImage(imageDestinationRef, cgiImage!, options)
+//            CGImageDestinationFinalize(imageDestinationRef)
+//            return data as Data
+//        })
+//    }
     
     func savePng(image: UIImage, path: URL) {
         if let pngData = image.pngData()

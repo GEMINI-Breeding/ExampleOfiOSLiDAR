@@ -17,7 +17,7 @@ class ViewController: UIViewController {
 
     @IBOutlet weak var centerSpotLabel: UILabel!
     @IBOutlet weak var distanceLabel: UILabel!
-    @IBOutlet weak var distanceSlider: UISlider!
+    //@IBOutlet weak var distanceSlider: UISlider!
     @IBOutlet weak var imageView: UIImageView!
     @IBOutlet weak var rgbimageView: UIImageView!
     
@@ -72,13 +72,13 @@ class ViewController: UIViewController {
         discovery?.start(.emulator)
     }
 
-    @IBAction func distanceSliderValueChanged(_ sender: Any) {
-        if let remoteControl = self.camera?.getRemoteControl(),
-           let fusionController = remoteControl.getFusionController() {
-            let newDistance = distanceSlider.value
-            try? fusionController.setFusionDistance(Double(newDistance))
-        }
-    }
+//    @IBAction func distanceSliderValueChanged(_ sender: Any) {
+//        if let remoteControl = self.camera?.getRemoteControl(),
+//           let fusionController = remoteControl.getFusionController() {
+//            let newDistance = distanceSlider.value
+//            try? fusionController.setFusionDistance(Double(newDistance))
+//        }
+//    }
     
     @IBAction func periodSliderValueChanged(_ sender: UISlider)
     {
@@ -216,18 +216,14 @@ extension ViewController : FLIRStreamDelegate {
                             self.centerSpotLabel.text = spot.getValue().description()
                         }
                     }
-                    if let remoteControl = self.camera?.getRemoteControl(),
-                       let fusionController = remoteControl.getFusionController() {
-                        let distance = fusionController.getFusionDistance()
-                        self.distanceLabel.text = "\((distance * 1000).rounded() / 1000)"
-                        self.distanceSlider.value = Float(distance)
-                        
-                        
-                    }
+                    
+//                    if let remoteControl = self.camera?.getRemoteControl(),
+//                       let fusionController = remoteControl.getFusionController() {
+//                        let distance = fusionController.getFusionDistance()
+//                        self.distanceLabel.text = "\((distance * 1000).rounded() / 1000)"
+//                        self.distanceSlider.value = Float(distance)
+//                    }
 
-                    //let path = self.documentDirectoryPath()?.appendingPathComponent("exampleJpg.jpg")?.path.absoluteString
-                    //print(self.fm.getPathForImage(name: "Example"))
-                    //let path = getPathForImage(name: "Example")?.path
                     let path = self.fm.getPathForImage(name: "IMG_\(self.save_cnt)")?.path
                     do
                     {
