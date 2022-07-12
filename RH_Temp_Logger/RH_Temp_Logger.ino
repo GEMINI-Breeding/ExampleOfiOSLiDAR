@@ -23,11 +23,21 @@ void printTime()
   Serial.print(timeString);
 }
 
+void dateTime(uint16_t* date, uint16_t* time) {
+  DateTime now = RTC.now();
+
+  // return date using FAT_DATE macro to format fields
+  *date = FAT_DATE(now.year(), now.month(), now.day());
+
+  // return time using FAT_TIME macro to format fields
+  *time = FAT_TIME(now.hour(), now.minute(), now.second());
+}
+
 void genTodayCsv(char *str, int strLen)
 {
   DateTime now = RTC.now();
   // Be aware of max string len for SD card file name
-  sprintf(str, "%d%d%d.csv", 
+  sprintf(str, "%d%02d%02d.csv", 
           now.year(), now.month(), now.day());
 }
 
@@ -40,24 +50,30 @@ void sdCardLogging(float temp, float rh)
   if (!SD.exists(fileName))
   {
     // Create file
+    //put this next line *Right Before* any file open line:
+    SdFile::dateTimeCallback(dateTime);
     File dataFile = SD.open(fileName, FILE_WRITE);
     sprintf(str, "Time(YYYY-MM-DD HH:MM:SS),Temperature(°C),Relative Humidity(Percent)");
     if (dataFile)
     {
       dataFile.println(str);
       dataFile.close();
+      //Serial.println("Created a new CSV file.");
     }
   }
   else
   {
     // Data
     DateTime now = RTC.now();
+    //put this next line *Right Before* any file open line:
+    SdFile::dateTimeCallback(dateTime);
     File dataFile = SD.open(fileName, FILE_WRITE);
     sprintf(str, "%d-%d-%d %02d:%02d:%02d,%d.%02d,%d.%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second(), (int)temp, (int)(temp * 100) % 100, (int)rh, (int)(rh * 100) % 100);
     if (dataFile)
     {
       dataFile.println(str);
       dataFile.close();
+      //Serial.println("Continue writing on a CSV file.");
     }
   }
 }
