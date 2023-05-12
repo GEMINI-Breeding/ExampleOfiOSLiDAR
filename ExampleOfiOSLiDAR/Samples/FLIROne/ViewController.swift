@@ -17,7 +17,7 @@ class ViewController: UIViewController {
 
     @IBOutlet weak var centerSpotLabel: UILabel!
     @IBOutlet weak var distanceLabel: UILabel!
-    //@IBOutlet weak var distanceSlider: UISlider!
+    @IBOutlet weak var distanceSlider: UISlider!
     @IBOutlet weak var imageView: UIImageView!
     @IBOutlet weak var rgbimageView: UIImageView!
     
@@ -217,12 +217,12 @@ extension ViewController : FLIRStreamDelegate {
                         }
                     }
                     
-//                    if let remoteControl = self.camera?.getRemoteControl(),
-//                       let fusionController = remoteControl.getFusionController() {
-//                        let distance = fusionController.getFusionDistance()
-//                        self.distanceLabel.text = "\((distance * 1000).rounded() / 1000)"
-//                        self.distanceSlider.value = Float(distance)
-//                    }
+                    if let remoteControl = self.camera?.getRemoteControl(),
+                       let fusionController = remoteControl.getFusionController() {
+                        let distance = fusionController.getFusionDistance()
+                        self.distanceLabel.text = "\((distance * 1000).rounded() / 1000)"
+                        self.distanceSlider.value = Float(distance)
+                    }
 
                     let path = self.fm.getPathForImage(name: "IMG_\(self.save_cnt)")?.path
                     do

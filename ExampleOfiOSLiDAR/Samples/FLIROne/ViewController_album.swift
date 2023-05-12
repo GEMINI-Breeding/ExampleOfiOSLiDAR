@@ -78,9 +78,9 @@ class ViewController_album: UIViewController {
 
         //guard let imagePath = Bundle.main.path(forResource: "IMG_0051", ofType: "jpg") else {
         //guard let imagePath = getPathForImage(name:"Example")?.path else {
-        //self.fm.setFolderName(inputName: "2022-02-22-Greenhouse")
+        self.fm.setFolderName(inputName: "2022_06_09/flir_jpg")
         //self.fm.setFolderName(inputName: "2022-03-01-LidarMatching")
-        self.fm.setFolderName(inputName: "./")
+        //self.fm.setFolderName(inputName: "./")
         
        
         
@@ -132,80 +132,85 @@ class ViewController_album: UIViewController {
             spotLabel.text = "\(spot.getValue())"
         }
         
-        self.fm.setFolderName(inputName: "\(self.fm.folder_name)_processed")
-        self.fm.createFolderIfNeeded()
+        self.fm.setFolderName(inputName: "\(self.fm.folder_name)")
+        //self.fm.createFolderIfNeeded()
      
     }
     
     @IBAction func processImage(_ sender: Any) {
         
         //for file in fileURLs
-        if (self.cnt < fileURLs.count){
-            
-            let file = fileURLs[self.cnt]
-            self.cnt += 1
-            
-            
-            print(file)
-            let thermalImage = FLIRThermalImageFile()
-            thermalImage.open(file.path)
-            thermalImage.setTemperatureUnit(.CELSIUS)
-
-            let theFileName = (file.path as NSString).lastPathComponent
-            let ir_name = theFileName.replacingOccurrences(of: ".JPG", with: "_IR")
-            let rgb_name = theFileName.replacingOccurrences(of: ".JPG", with: "_RGB")
-            let ir_path = self.fm.getPathForImagePNG(name: "\(ir_name)")
-            let rgb_path = self.fm.getPathForImagePNG(name: "\(rgb_name)")
-            
-            
-            if let fusion = thermalImage.getFusion() {
-                //fusion.setFusionMode(FUSION_MSX_MODE)
-                //msxImageView.image = thermalImage.getImage()
-
-                fusion.setFusionMode(IR_MODE)
-                //print(thermalImage.palette?.name)
-                //thermalImage.palette = FLIRPalette.init()
-                thermalImage.palette = self.pm.gray
-                //print(thermalImage.palette?.name)
-                
-
-                
-                let ir_image = thermalImage.getImage()!
-                //let ir_image = UIColor.orange.image(CGSize(width: 480, height: 640))
-                let new_ir_image = ir_image.rotate(radians: .pi) // Rotate 180 degrees
-                irImageView.image = new_ir_image
-                //saveJpg(image: ir_image!, path: ir_path!)
-                savePng(image: new_ir_image!, path: ir_path!)
-
-
-                fusion.setFusionMode(VISUAL_MODE)
-                let rgb_image = thermalImage.getImage()!
-                //let rgb_image = UIColor.orange.image(CGSize(width: 480, height: 640))
-                let new_rgb_image = rgb_image.rotate(radians: .pi) // Rotate 180 degrees
-                visualImageView.image = new_rgb_image
-                //saveJpg(image: rgb_image!, path: rgb_path!)
-                savePng(image: new_rgb_image!, path: rgb_path!)
-            }
-            
-            if let statistics = thermalImage.getStatistics() {
-                let min = statistics.getMin()
-                minLabel.text = "\(min)"
-                let max = statistics.getMax()
-                maxLabel.text = "\(max)"
-                let average = statistics.getAverage()
-                averageLabel.text = "\(average)"
-            }
-            if let spot = thermalImage.measurements?.getAllSpots().first {
-                spotLabel.text = "\(spot.getValue())"
-            }
-            
-            //usleep(10000) //will sleep for 0.1 second
-
-        }
-        else
+        for index in 1...100
         {
-            print("Last file!")
+            if (self.cnt < fileURLs.count){
+                
+                let file = fileURLs[self.cnt]
+                self.cnt += 1
+                
+                
+                print(file)
+                let thermalImage = FLIRThermalImageFile()
+                thermalImage.open(file.path)
+                thermalImage.setTemperatureUnit(.CELSIUS)
+
+                let theFileName = (file.path as NSString).lastPathComponent
+                let ir_name = theFileName.replacingOccurrences(of: ".jpg", with: "_IR")
+                let rgb_name = theFileName.replacingOccurrences(of: ".jpg", with: "_RGB")
+                let ir_path = self.fm.getPathForImageExt(subdir:"../flir_jpg_processed", name: "\(ir_name)",ext:"jpg")
+                let rgb_path = self.fm.getPathForImageExt(subdir:"../flir_jpg_processed", name: "\(rgb_name)",ext:"jpg")
+                
+                
+                if let fusion = thermalImage.getFusion() {
+                    //fusion.setFusionMode(FUSION_MSX_MODE)
+                    //msxImageView.image = thermalImage.getImage()
+
+                    fusion.setFusionMode(IR_MODE)
+                    //print(thermalImage.palette?.name)
+                    //thermalImage.palette = FLIRPalette.init()
+                    thermalImage.palette = self.pm.gray
+                    //print(thermalImage.palette?.name)
+                    
+
+                    
+                    let ir_image = thermalImage.getImage()!
+                    //let ir_image = UIColor.orange.image(CGSize(width: 480, height: 640))
+                    let new_ir_image = ir_image.rotate(radians: .pi) // Rotate 180 degrees
+                    irImageView.image = new_ir_image
+                    //saveJpg(image: ir_image, path: ir_path!)
+                    //savePng(image: new_ir_image!, path: ir_path!)
+
+
+                    fusion.setFusionMode(VISUAL_MODE)
+                    let rgb_image = thermalImage.getImage()!
+                    //let rgb_image = UIColor.orange.image(CGSize(width: 480, height: 640))
+                    let new_rgb_image = rgb_image.rotate(radians: .pi) // Rotate 180 degrees
+                    visualImageView.image = new_rgb_image
+                    saveJpg(image: rgb_image, path: rgb_path!)
+                    //savePng(image: new_rgb_image!, path: rgb_path!)
+                }
+                
+                if let statistics = thermalImage.getStatistics() {
+                    let min = statistics.getMin()
+                    minLabel.text = "\(min)"
+                    let max = statistics.getMax()
+                    maxLabel.text = "\(max)"
+                    let average = statistics.getAverage()
+                    averageLabel.text = "\(average)"
+                }
+                if let spot = thermalImage.measurements?.getAllSpots().first {
+                    spotLabel.text = "\(spot.getValue())"
+                }
+                
+                //usleep(10000) //will sleep for 0.1 second
+                
+            }
+            else
+            {
+                print("Last file!")
+                break
+            }
         }
+        
         
     }
 

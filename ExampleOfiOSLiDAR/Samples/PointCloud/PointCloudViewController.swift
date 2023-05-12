@@ -1099,14 +1099,14 @@ extension PointCloudViewController : FLIRStreamDelegate {
                     
                     if self.saveNowFlir{
                         //let path = self.fm.getPathForImage(name: "flir_jpg/\(self.fm.genTodayName())_IMG_\(self.saveCnt)")?.path
-                        let path = self.fm.getPathForImageExt(subdir: "flir_jpg", name: self.genFileName(), ext: "jpg")?.path
-                        do
-                        {
-                            try self.flir_img.save(as:path!)
-                            self.processFLIR()
-                        } catch{
-                            print("Save failed \(error)")
-                        }
+//                        let path = self.fm.getPathForImageExt(subdir: "flir_jpg", name: self.genFileName(), ext: "jpg")?.path
+//                        do
+//                        {
+//                            try self.flir_img.save(as:path!)
+//                            self.processFLIR()
+//                        } catch{
+//                            print("Save failed \(error)")
+//                        }
                         self.saveNowFlir = false
                     }
                     
@@ -1214,7 +1214,7 @@ func addLocation(_ location: CLLocation, roll:Double, pitch:Double, yaw:Double, 
     //print(attiData)
     metaData[kCGImagePropertyRawDictionary as String] = attiData
     
-    print(metaData)
+    // print(metaData)
 
     return metaData
 }

@@ -82,7 +82,7 @@ void setup()
 {
   // RTC setting
   RTC.begin();
-  // RTC.adjust(DateTime(__DATE__, __TIME__));
+  //RTC.adjust(DateTime(__DATE__, __TIME__));
 
   Serial.begin(9600);
   mySerial.begin(BLUETOOTH_SPEED);
